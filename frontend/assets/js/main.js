@@ -1,5 +1,8 @@
 // assets/js/main.js
 (function () {
+  // =========================================
+  // 1. DOM 元素获取
+  // =========================================
   const storyLogEl = document.getElementById("story-log");
   const generateBtn = document.getElementById("generate-btn");
   const userInputEl = document.getElementById("user-input");
@@ -9,17 +12,21 @@
   const newSessionBtn = document.getElementById("new-session-btn");
 
   const actionHistoryEl = document.getElementById("action-history");
+
+  // 输入栏相关元素
   const inputBarEl = document.getElementById("input-bar");
-  const inputCollapseToggleEl = document.getElementById("input-collapse-toggle");
-  const inputSizeToggleEl = document.getElementById("input-size-toggle");
+  const inputCollapseToggleEl = document.getElementById("input-collapse-toggle"); // 左上角收起按钮
+  const inputSizeToggleEl = document.getElementById("input-size-toggle");         // 右下角半屏按钮
   const actionSuggestionsEl = document.getElementById("action-suggestions");
   const actionSuggestionsToggleEl = document.getElementById("action-suggestions-toggle");
 
+  // 统计面板元素
   const statWordsEl = document.getElementById("stat-words");
   const statDurationEl = document.getElementById("stat-duration");
   const statDurationFrontEl = document.getElementById("stat-duration-front");
   const statTotalWordsEl = document.getElementById("stat-total-words");
 
+  // 右侧面板元素
   const dungeonNameEl = document.getElementById("dungeon-name");
   const dungeonNodeNameEl = document.getElementById("dungeon-node-name");
   const dungeonProgressEl = document.getElementById("dungeon-progress");
@@ -29,9 +36,43 @@
   const variableSummaryAbilityEl = document.getElementById("var-ability");
   const variableSummaryFactionEl = document.getElementById("var-faction");
 
+  // =========================================
+  // 2. SVG 图标定义 (用于 JS 动态切换)
+  // =========================================
+
+  // 半屏模式图标：四角向外 (展开)
+  const iconExpandFull = `
+    <svg viewBox="0 0 24 24" width="24" height="24" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"/>
+    </svg>`;
+
+  // 半屏模式图标：四角向里 (收起/还原)
+  const iconCollapseFull = `
+    <svg viewBox="0 0 24 24" width="24" height="24" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M4 14h6v6M20 10h-6V4M14 10l7-7M10 14L3 21"/>
+    </svg>`;
+
+  // 底部栏折叠按钮：向下箭头 (收起)
+  const iconChevronDown = `
+    <svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round">
+      <polyline points="6 9 12 15 18 9"></polyline>
+    </svg>`;
+
+  // 底部栏折叠按钮：向上箭头 (展开)
+  const iconChevronUp = `
+    <svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round">
+      <polyline points="18 15 12 9 6 15"></polyline>
+    </svg>`;
+
+  // =========================================
+  // 3. 状态变量
+  // =========================================
   let currentSessionId = null;
   let totalWordCount = 0;
 
+  // =========================================
+  // 4. 会话管理逻辑
+  // =========================================
   function generateSessionId() {
     const now = Date.now();
     const randomPart = Math.floor(Math.random() * 1e6)
@@ -55,18 +96,12 @@
     window.localStorage.setItem("novel_session_id", currentSessionId);
     totalWordCount = 0;
 
-    if (statTotalWordsEl) {
-      statTotalWordsEl.textContent = "0";
-    }
-    if (storyLogEl) {
-      storyLogEl.innerHTML = "";
-    }
+    if (statTotalWordsEl) statTotalWordsEl.textContent = "0";
+    if (storyLogEl) storyLogEl.innerHTML = "";
 
     updateSessionLabel();
 
-    if (inputStatusEl) {
-      inputStatusEl.textContent = "已创建新会话。";
-    }
+    if (inputStatusEl) inputStatusEl.textContent = "已创建新会话。";
 
     if (actionHistoryEl) {
       actionHistoryEl.innerHTML = "";
@@ -86,6 +121,9 @@
     }
   }
 
+  // =========================================
+  // 5. UI 更新辅助函数
+  // =========================================
   function appendStoryBlock(text, meta, type) {
     if (!storyLogEl) return;
 
@@ -115,6 +153,7 @@
     block.appendChild(textEl);
     storyLogEl.appendChild(block);
 
+    // 自动滚动到底部
     storyLogEl.scrollTop = storyLogEl.scrollHeight;
   }
 
@@ -137,6 +176,9 @@
     actionHistoryEl.scrollTop = actionHistoryEl.scrollHeight;
   }
 
+  // =========================================
+  // 6. 核心生成逻辑 (Fetch API)
+  // =========================================
   async function generateStory() {
     if (!userInputEl) return;
 
@@ -204,6 +246,7 @@
     } finally {
       if (generateBtn) {
         generateBtn.disabled = false;
+        userInputEl.focus(); // 聚焦回输入框
       }
     }
   }
@@ -278,77 +321,109 @@
     }
   }
 
+  // =========================================
+  // 7. 交互事件绑定 (重点优化部分)
+  // =========================================
+
+  // (A) 绑定“下次行动建议”的展开/收起
   function bindActionSuggestionsToggle() {
     if (!actionSuggestionsEl || !actionSuggestionsToggleEl) return;
 
     actionSuggestionsToggleEl.addEventListener("click", function () {
       const isOpen = actionSuggestionsEl.classList.toggle("action-suggestions--open");
-      actionSuggestionsToggleEl.textContent = isOpen
-        ? "下次行动建议 ▲"
-        : "下次行动建议 ▼";
+
+      // 更新文字提示，保持 "✨" 前缀
+      if (isOpen) {
+        actionSuggestionsToggleEl.textContent = "✨ 下次行动建议 (点击收起)";
+      } else {
+        actionSuggestionsToggleEl.textContent = "✨ 下次行动建议 (点击展开)";
+      }
     });
   }
 
+  // (B) 绑定点击建议 Chip 填入输入框
   function bindSuggestionChips() {
     if (!userInputEl) return;
 
+    // 使用事件委托，或者重新获取DOM（如果Chips是动态生成的，这里假设是静态的）
     const chips = document.querySelectorAll(".suggestion-chip[data-suggest]");
     chips.forEach(function (chip) {
       chip.addEventListener("click", function () {
-        const suggest = this.getAttribute("data-suggest") || this.textContent || "";
+        // 获取完整句子
+        const suggest = this.getAttribute("data-suggest") || this.textContent.trim();
         if (!suggest) return;
 
+        // 简单的填入逻辑，如果输入框已有内容则换行追加
         if (!userInputEl.value) {
           userInputEl.value = suggest;
         } else {
-          const prefix = userInputEl.value.replace(/\s*$/, "");
+          // 避免多次重复换行
+          const prefix = userInputEl.value.trim();
           userInputEl.value = prefix + "\n" + suggest;
         }
+
+        // 自动调整输入框高度并聚焦
+        userInputEl.scrollTop = userInputEl.scrollHeight;
         userInputEl.focus();
       });
     });
   }
 
+  // (C) 绑定底部输入栏的 折叠 与 半屏 逻辑
   function bindInputPanelEvents() {
+    // 1. 左上角：折叠/展开 整个输入栏
     if (inputCollapseToggleEl && inputBarEl) {
       inputCollapseToggleEl.addEventListener("click", function () {
         const collapsed = inputBarEl.classList.toggle("input-bar--collapsed");
-        inputCollapseToggleEl.textContent = collapsed ? "⌃" : "⌄";
+
+        // 【关键修复】：使用 innerHTML 替换 SVG，而不是 textContent
+        inputCollapseToggleEl.innerHTML = collapsed ? iconChevronUp : iconChevronDown;
         inputCollapseToggleEl.setAttribute(
           "aria-label",
           collapsed ? "展开输入栏" : "收起输入栏"
         );
 
+        // 如果在半屏模式下折叠，强制退出半屏，避免界面错乱
         if (collapsed && document.body.classList.contains("input-half-screen")) {
           document.body.classList.remove("input-half-screen");
           inputBarEl.classList.remove("input-bar--half-screen");
+
           if (inputSizeToggleEl) {
-            inputSizeToggleEl.textContent = "↗";
-            inputSizeToggleEl.setAttribute("aria-label", "放大输入框");
+            // 重置半屏按钮图标为“展开”
+            inputSizeToggleEl.innerHTML = iconExpandFull;
+            inputSizeToggleEl.setAttribute("aria-label", "切换半屏模式");
+            inputSizeToggleEl.setAttribute("title", "切换半屏专注模式");
           }
         }
       });
     }
 
+    // 2. 右下角：切换 半屏/专注 模式
     if (inputSizeToggleEl && inputBarEl) {
       inputSizeToggleEl.addEventListener("click", function () {
+        // 如果当前是折叠状态，先自动展开
         if (inputBarEl.classList.contains("input-bar--collapsed")) {
           inputBarEl.classList.remove("input-bar--collapsed");
           if (inputCollapseToggleEl) {
-            inputCollapseToggleEl.textContent = "⌄";
+            inputCollapseToggleEl.innerHTML = iconChevronDown;
             inputCollapseToggleEl.setAttribute("aria-label", "收起输入栏");
           }
         }
 
+        // 切换 Body 的 class
         const isHalf = document.body.classList.toggle("input-half-screen");
+
+        // 【关键修复】：根据状态切换 SVG 图标
         if (isHalf) {
           inputBarEl.classList.add("input-bar--half-screen");
-          inputSizeToggleEl.textContent = "↙";
-          inputSizeToggleEl.setAttribute("aria-label", "缩小输入框");
+          inputSizeToggleEl.innerHTML = iconCollapseFull; // 显示“四角向内”
+          inputSizeToggleEl.setAttribute("aria-label", "退出半屏模式");
+          inputSizeToggleEl.setAttribute("title", "退出半屏专注模式");
         } else {
           inputBarEl.classList.remove("input-bar--half-screen");
-          inputSizeToggleEl.textContent = "↗";
-          inputSizeToggleEl.setAttribute("aria-label", "放大输入框");
+          inputSizeToggleEl.innerHTML = iconExpandFull;   // 显示“四角向外”
+          inputSizeToggleEl.setAttribute("aria-label", "切换半屏模式");
+          inputSizeToggleEl.setAttribute("title", "切换半屏专注模式");
         }
       });
     }
@@ -361,6 +436,7 @@
 
     if (userInputEl) {
       userInputEl.addEventListener("keydown", function (e) {
+        // Ctrl + Enter 快捷提交
         if ((e.ctrlKey || e.metaKey) && e.key === "Enter") {
           e.preventDefault();
           generateStory();
@@ -370,7 +446,9 @@
 
     if (newSessionBtn) {
       newSessionBtn.addEventListener("click", function () {
-        resetSession();
+        if(confirm("确定要开始新会话吗？当前记录将被清空。")) {
+            resetSession();
+        }
       });
     }
 
@@ -385,6 +463,7 @@
     refreshSessionSummary();
   }
 
+  // 确保 DOM 加载完成后执行
   if (document.readyState === "loading") {
     document.addEventListener("DOMContentLoaded", init);
   } else {

@@ -134,100 +134,70 @@
   <!-- 底部输入栏：可收起 + 下次行动建议 + 半屏书写 -->
   <footer class="input-bar" id="input-bar">
     <div class="input-container">
-      <!-- 顶部：标题 + 收起按钮 + 会话 ID -->
       <div class="input-header-row">
         <div class="input-header-left">
           <button
             type="button"
             class="icon-button input-collapse-btn"
             id="input-collapse-toggle"
-            aria-label="收起输入栏"
-            title="点击收起 / 展开底部侧边栏"
+            aria-label="收起/展开"
           >
-            ⌄
+            <svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
           </button>
-          <div class="input-header-text">
-            <div class="input-header-title">玩家输入 / 操作指令</div>
-            <div class="input-header-desc small-text">
-              这是一个可展开 / 收起的底部侧边栏，支持半屏书写模式，Ctrl / Cmd + Enter 快速提交。
-            </div>
+          <div class="input-header-desc">
+            Storyteller Console &nbsp;·&nbsp; <span id="session-label-inline">Ready</span>
           </div>
-        </div>
-        <div class="input-header-right small-text">
-          当前会话：<span id="session-label-inline">初始化中...</span>
         </div>
       </div>
 
-      <!-- 可折叠主体区域 -->
       <div class="input-body" id="input-body">
-        <!-- 下次行动建议：附着在输入框上缘，可展开 / 收起 -->
+
         <div class="action-suggestions" id="action-suggestions">
           <div class="action-suggestions-header">
-            <button
-              type="button"
-              class="action-suggestions-toggle"
-              id="action-suggestions-toggle"
-            >
-              下次行动建议 ▼
+            <button type="button" class="action-suggestions-toggle" id="action-suggestions-toggle">
+              ✨ 下次行动建议 (点击展开)
             </button>
-            <span class="small-text muted">
-              灵感不足时，可以点选一条作为起点，再自行润色修改。
-            </span>
           </div>
           <div class="action-suggestions-body" id="action-suggestions-body">
-            <button type="button" class="suggestion-chip"
-              data-suggest="我环顾四周，观察当前场景里人物与环境的细节。">
-              观察环境
+            <button type="button" class="suggestion-chip" data-suggest="我环顾四周，仔细观察当前场景里人物的表情与环境的细节。">
+              1. 我环顾四周，仔细观察当前场景里人物的表情与环境的细节。
             </button>
-            <button type="button" class="suggestion-chip"
-              data-suggest="我尝试与最近的可疑人物搭话，试探性套取关于事件的情报。">
-              与可疑人物交谈
+            <button type="button" class="suggestion-chip" data-suggest="我走上前去，尝试与看起来最关键的角色搭话，询问关于这里发生的事情。">
+              2. 我走上前去，尝试与看起来最关键的角色搭话，询问关于这里发生的事情。
             </button>
-            <button type="button" class="suggestion-chip"
-              data-suggest="我回顾目前已获取的线索，梳理时间线与人物关系。">
-              整理线索
-            </button>
-            <button type="button" class="suggestion-chip"
-              data-suggest="我检查自己的物品与状态，确认是否有遗漏的道具或伤势。">
-              检查自身状态
+            <button type="button" class="suggestion-chip" data-suggest="我检查自己的随身物品，确认武器和补给品的状态，以防突发状况。">
+              3. 我检查自己的随身物品，确认武器和补给品的状态，以防突发状况。
             </button>
           </div>
         </div>
 
-        <!-- 输入主区域 -->
         <div class="input-main">
           <div class="input-main-inner">
-            <label for="user-input" class="input-label">
-              具体输入 / 操作指令
-            </label>
-            <!-- 放大 / 缩小斜箭头：位于输入区域右上角 -->
-            <button
-              type="button"
-              class="icon-button input-size-toggle"
-              id="input-size-toggle"
-              aria-label="放大输入框"
-              title="半屏书写模式"
-            >
-              ↗
-            </button>
-
             <textarea
               id="user-input"
               class="input-textarea"
-              rows="3"
-              placeholder="例如：我走向吧台，与黑袍男子搭话，试探性地打听失踪案。"
+              rows="1"
+              placeholder="输入你的行动或指令..."
             ></textarea>
+
+            <button
+              type="button"
+              class="input-size-toggle"
+              id="input-size-toggle"
+              aria-label="切换半屏模式"
+              title="切换半屏专注模式"
+            >
+              <svg viewBox="0 0 24 24">
+                <path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+            </button>
           </div>
 
           <div class="input-actions">
-            <div class="input-hint small-text" id="input-hint">
-              提示：输入你的操作或想法，然后点击“生成下一段”，或使用 Ctrl / Cmd + Enter 快速提交。
-            </div>
-            <div class="input-buttons">
-              <button id="generate-btn" class="btn-primary">生成下一段</button>
-            </div>
+            <div class="input-hint" id="input-hint">Ctrl + Enter 发送</div>
+            <button id="generate-btn" class="btn-primary btn-small">生成下一段</button>
           </div>
-          <div class="small-text input-status" id="input-status"></div>
+          <div class="small-text input-status" id="input-status" style="text-align: right;"></div>
         </div>
       </div>
     </div>

@@ -3,9 +3,13 @@
    ========================================= */
 :root {
   /* --- 基础尺寸与字体 --- */
-  --radius-lg: 18px;
-  --radius-md: 12px;
-  --radius-sm: 8px;
+  --radius-xl: 24px;    /* 新增：超大圆角 */
+  --radius-lg: 18px;    /* 已有：大圆角 */
+  --radius-md: 12px;    /* 已有：中等圆角 */
+  --radius-sm: 8px;     /* 已有：小圆角 */
+  --radius-xs: 4px;     /* 新增：超小圆角 */
+  --radius-xxs: 2px;    /* 可选：极小圆角 */
+  --radius-none: 0;     /* 可选：无圆角 */
   --font-main: system-ui, -apple-system, "Segoe UI", sans-serif;
 
   /* --- 动画与过渡 --- */
@@ -464,6 +468,7 @@ body.bg-circuit {
 /* 统一所有次级/详情面板样式 */
 .story-log, .detail-panel, .sidebar-section, .story-block-user,
 .node-block, .visual-option, .input-textarea {
+  border-radius: var(--radius-xs); /* 圆角sm-8px */
   background: var(--bg-elevated-alt);
   border: 1px solid var(--border-soft);
   color: var(--text-secondary);
@@ -518,186 +523,163 @@ body.bg-circuit {
 
 /* --- A. 首页/剧情页 (Index/Story Page) --- */
 
-/* 1. 剧情页的三栏布局 (左主观 / 中剧情 / 右客观) */
+/* 1. 剧情页的三栏布局 */
 body[data-page="index"] .main-layout {
-  grid-template-columns: minmax(230px, 1.4fr) minmax(0, 2.6fr) minmax(230px, 1.4fr);
-  align-items: flex-start;
-  padding: 14px 16px 120px; /* 底部预留 */
+  /* 固定高度：屏幕总高 - 顶部导航(60px) */
+  height: calc(100vh - 60px);
+
+  /* 三列宽度分配 */
+  grid-template-columns: minmax(240px, 1.2fr) minmax(0, 3.5fr) minmax(240px, 1.2fr);
+
+  /* 关键：拉伸对齐，使三栏高度自动填满 */
+  align-items: stretch;
+
+  /* 关键：底部 Padding 设为 10，让面板底部直达屏幕边缘，与输入栏底部齐平 */
+  padding: 14px 16px 10px 16px;
+
+  border-radius: var(--radius-md);
+
+  overflow: hidden; /* 禁止外层滚动 */
 }
 
+/* 左/右侧边栏容器 */
 body[data-page="index"] .side-panel-left,
 body[data-page="index"] .side-panel-right {
   display: flex;
   flex-direction: column;
   gap: 12px;
+  height: 100%;
+  max-height: 100%;
+
+  /* 底部圆角，制造“落地”感 */
+  border-bottom-left-radius: var(--radius-lg);
+  border-bottom-right-radius: var(--radius-lg);
+  border-bottom: 1px solid var(--border-soft); /* 恢复底部边框 */
+
+  /* 内部滚动设置 */
+  overflow-y: auto;
+  /* 底部留白：防止最后的内容被悬浮输入框遮挡 */
+  padding-bottom: 40px;
 }
 
-/* 2. 故事展示区域 */
+/* 中间故事区域 */
+body[data-page="index"] .story-panel {
+  display: flex;
+  flex-direction: column;
+  height: 90%;
+  /* 80px 大约是收起状态下输入框的高度 + 一点空隙。你可以改这个数字来微调 */
+  margin-bottom: 80px;
+  max-height: 90%;
+
+  /* 保持原有的圆角设置，或者根据需要修改 */
+  border-bottom-left-radius: var(--radius-lg); /* 建议恢复圆角，因为它现在悬空了 */
+  border-bottom-right-radius: var(--radius-lg); /* 建议恢复圆角 */
+  border-bottom: 1px solid var(--border-soft); /* 恢复底部边框 */
+  background: var(--bg-elevated);
+
+  /* 内部滚动设置 */
+  overflow-y: auto;
+}
+
 body[data-page="index"] .story-log {
+  flex: 1;
   margin-top: 0;
-  padding: 10px;
+  /* 底部留白：给悬浮输入框留出空间，确保文字能滚上来 */
+  padding: 10px 20px 140px 20px;
   border-radius: var(--radius-md);
-  /* 动态高度，适应底部输入栏 */
-  height: calc(100vh - 260px);
+  height: 100%;
   overflow-y: auto;
   scroll-behavior: smooth;
+  border: none;
+  background: transparent;
 }
 
-.story-block {
-  padding: 10px 12px;
-  border-radius: var(--radius-md);
-  background: var(--bg-elevated); /* AI 消息背景 */
-  border: 1px solid var(--border-soft);
-  margin-bottom: 8px;
-  color: var(--text-primary);
-}
-
-.story-block-user {
-  /* 用户消息背景已经在上面统一定义为 bg-elevated-alt */
-  border-color: rgba(var(--accent), 0.2);
-}
-
-.story-meta {
-  font-size: 11px;
-  color: var(--text-secondary);
-  margin-bottom: 4px;
-}
-
-.story-text {
-  font-size: 14px;
-  line-height: 1.7;
-  white-space: pre-wrap;
-}
-
-/* 3. 侧边栏内容 */
-.sidebar-section {
-  padding: 8px 10px;
-  border-radius: var(--radius-md);
-}
-
-.sidebar-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 4px;
-}
-
-.sidebar-title {
-  font-size: 13px;
-  font-weight: 600;
-  color: var(--text-primary);
-}
-
-.sidebar-subtitle {
-  margin-top: 10px;
-  margin-bottom: 4px;
-  font-size: 12px;
-  font-weight: 600;
-  color: var(--text-secondary);
-}
-
-.sidebar-kv > div {
-  font-size: 12px;
-  margin-bottom: 2px;
-  color: var(--text-secondary);
-}
-
-.action-history {
-  max-height: 180px;
-  overflow-y: auto;
-  padding: 6px 8px;
-  border-radius: var(--radius-sm);
-  background: rgba(0,0,0,0.1);
-  border: 1px dashed var(--border-soft);
-  margin-top: 4px;
-}
-
-.action-history-item {
-  font-size: 12px;
-  line-height: 1.5;
-  padding: 3px 0;
-  border-bottom: 1px dashed rgba(255, 255, 255, 0.06);
-}
-
-.action-history-item:last-child {
-  border-bottom: none;
-}
-
-/* 4. 底部输入栏 (悬浮卡片式 - 仅 Index 页面) */
+/* 2. 底部输入栏 (悬浮卡片式) */
 body[data-page="index"] .input-bar {
   position: fixed;
   left: 0;
   right: 0;
   bottom: 0;
-  padding: 10px 16px 14px;
+  /* 调整 padding，让它贴底但保持美观 */
+  padding: 0 10px 10px 10px;
   background: transparent;
-  border-top: none;
   z-index: 100;
   display: flex;
   justify-content: center;
-  pointer-events: none; /* 只有内部容器可点击 */
+  pointer-events: none; /* 点击穿透，不阻挡两侧内容 */
 }
 
+/* 输入框容器外观 */
 body[data-page="index"] .input-container {
   pointer-events: auto;
   width: 100%;
-  max-width: 960px;
-  background: var(--bg-elevated);
+  max-width: 900px;
+
+  /* 默认深色半透明背景 (适用于 Dark/Cyberpunk/Forest 等) */
+  background: rgba(16, 21, 32, 0.95);
+  backdrop-filter: blur(10px);
+
+  /* 使用全局大圆角 */
   border-radius: var(--radius-lg);
-  box-shadow: var(--shadow-soft);
+
+  box-shadow: 0 -4px 30px rgba(0, 0, 0, 0.3), 0 0 0 1px var(--border-soft);
   border: 1px solid var(--border-soft);
-  padding: 8px 14px 10px;
+  padding: 10px 14px;
   display: flex;
   flex-direction: column;
+  transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
 }
 
-/* 顶部标题行 */
+/* [新增] 针对“羊皮卷 (scroll)”和“晨曦 (light)”主题的特化样式 */
+/* 解决背景太黑的问题 */
+[data-theme="scroll"] body[data-page="index"] .input-container,
+[data-theme="light"] body[data-page="index"] .input-container {
+    background: rgba(244, 236, 224, 0.95); /* 羊皮卷风格的米色半透明 */
+    border-color: #c2b280;
+    box-shadow: 0 -4px 20px rgba(75, 54, 33, 0.15);
+}
+
+/* 针对晨曦主题微调 */
+[data-theme="light"] body[data-page="index"] .input-container {
+    background: rgba(255, 255, 255, 0.95); /* 纯白半透明 */
+    border-color: #dbe4ef;
+    box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.08);
+}
+
+/* 输入栏头部 */
 .input-header-row {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 12px;
-  margin-bottom: 4px;
+  margin-bottom: 8px;
+  padding: 0 4px;
 }
 
 .input-header-left {
   display: flex;
   align-items: center;
-  gap: 8px;
-}
-
-.input-header-title {
-  font-size: 13px;
-  font-weight: 600;
+  gap: 10px;
 }
 
 .input-header-desc {
   font-size: 11px;
   color: var(--text-secondary);
-  opacity: 0.8;
+  opacity: 0.7;
 }
 
-/* 输入主体容器 */
-.input-body {
-  transition: max-height var(--transition-fast), opacity var(--transition-fast), transform var(--transition-fast);
-  max-height: 240px; /* 默认最大高度 */
-  overflow: hidden;
-}
-
-/* "下次行动建议" 区域 */
+/* 纵向行动建议 */
 .action-suggestions {
-  border-radius: var(--radius-md);
-  background: var(--bg-elevated-alt);
-  border: 1px solid var(--border-soft);
-  padding: 4px 8px;
-  margin-bottom: 6px;
-  margin-top: 4px;
+  background: transparent;
+  border: none;
+  padding: 0;
+  margin-bottom: 8px;
+  overflow: hidden;
+  transition: max-height 0.3s ease;
 }
 
 .action-suggestions-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
+  margin-bottom: 6px;
+  padding-left: 4px;
 }
 
 .action-suggestions-toggle {
@@ -705,114 +687,143 @@ body[data-page="index"] .input-container {
   border: none;
   color: var(--accent);
   font-size: 12px;
+  font-weight: 600;
   cursor: pointer;
-  padding: 2px 4px;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  gap: 4px;
 }
 
 .action-suggestions-body {
-  margin-top: 4px;
   display: flex;
-  flex-wrap: wrap;
+  flex-direction: column;
   gap: 6px;
+  max-height: 200px;
+  overflow-y: auto;
+  padding: 2px 4px;
+}
+
+.suggestion-chip {
+  width: 100%;
+  text-align: left;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border-soft);
+  background: var(--bg-elevated-alt);
+  color: var(--text-secondary);
+  padding: 8px 12px;
+  font-size: 12px;
+  line-height: 1.4;
+  cursor: pointer;
+  transition: all 0.2s;
+  white-space: normal;
+}
+
+.suggestion-chip:hover {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+  color: var(--text-primary);
+  transform: translateX(2px);
 }
 
 .action-suggestions:not(.action-suggestions--open) .action-suggestions-body {
   display: none;
 }
 
-.suggestion-chip {
-  border-radius: 999px;
-  border: 1px solid var(--border-soft);
-  background: transparent;
-  color: var(--text-secondary);
-  padding: 3px 8px;
-  font-size: 11px;
-  cursor: pointer;
-  transition: all var(--transition-fast);
-}
-
-.suggestion-chip:hover {
-  border-color: var(--accent);
-  color: var(--text-primary);
-  background: var(--accent-soft);
-}
-
-/* 输入框主区域 */
-.input-main {
-  display: flex;
-  flex-direction: column;
-}
-
+/* 输入主区域 */
 .input-main-inner {
   position: relative;
+  display: flex;
+  align-items: flex-end;
+  gap: 10px;
 }
 
-/* 放大/缩小按钮位置 */
+body[data-page="index"] .input-textarea {
+  flex: 1;
+  width: 100%;
+  min-height: 44px;
+  max-height: 120px;
+  padding: 10px 14px;
+  padding-right: 40px;
+  border-radius: var(--radius-md); /* 使用中号圆角 */
+  resize: none;
+  background: var(--bg-elevated-alt);
+  border: 1px solid var(--border-soft);
+  font-size: 14px;
+  line-height: 1.5;
+  box-shadow: inset 0 2px 4px rgba(0,0,0,0.05);
+  color: var(--text-primary); /* 确保字体颜色跟随主题 */
+}
+
+body[data-page="index"] .input-textarea:focus {
+  background: var(--bg-elevated);
+  box-shadow: 0 0 0 2px var(--accent-soft);
+}
+
+/* 半屏/放大按钮 */
 .input-size-toggle {
   position: absolute;
-  top: 0;
-  right: 0;
-  z-index: 10;
+  bottom: 8px;
+  right: 8px;
+  width: 24px;
+  height: 24px;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  opacity: 0.5;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: opacity 0.2s;
 }
 
-/* Textarea 调整 */
-body[data-page="index"] .input-textarea {
-  width: 100%;
-  min-height: 52px;
-  max-height: 120px;
-  padding-top: 22px; /* 给右上角按钮留空 */
-  padding-right: 30px;
+.input-size-toggle:hover {
+  opacity: 1;
+}
+
+.input-size-toggle svg {
+  width: 18px;
+  height: 18px;
+  fill: var(--text-secondary); /* 确保图标颜色跟随主题 */
 }
 
 .input-actions {
   display: flex;
-  justify-content: space-between;
   align-items: center;
-  margin-top: 6px;
+  margin-top: 8px;
+  justify-content: space-between;
+  padding: 0 4px;
 }
 
-.input-buttons {
-  margin-left: auto;
+.input-hint {
+  font-size: 11px;
+  opacity: 0.6;
 }
 
 /* 折叠状态 */
 .input-bar--collapsed .input-body {
-  max-height: 0;
-  opacity: 0;
-  pointer-events: none;
-  margin-top: 0;
+  display: none;
+}
+.input-bar--collapsed .input-container {
+  width: auto;
+  border-radius: 999px;
+  padding: 6px 16px;
 }
 
-/* 半屏书写模式 (Half Screen Mode) */
-body[data-page="index"].input-half-screen {
-  padding-bottom: 50vh; /* 避免遮挡 */
-}
-
-body[data-page="index"].input-half-screen .input-bar {
-  bottom: 0;
-}
-
+/* 半屏模式 */
 body[data-page="index"].input-half-screen .input-container {
-  max-width: 980px;
-  height: 50vh;
-  max-height: 50vh;
+  height: 60vh;
+  max-width: 1000px;
+  /* 半屏时上方保留圆角，底部直角，或者保持圆角皆可，这里保持圆角 */
+  border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+  margin-bottom: -10px; /* 抵消 padding */
 }
 
-body[data-page="index"].input-half-screen .input-body {
-  flex: 1;
-  max-height: none;
-  display: flex;
-  flex-direction: column;
-}
-
-body[data-page="index"].input-half-screen .input-main {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-}
-
+body[data-page="index"].input-half-screen .input-body,
+body[data-page="index"].input-half-screen .input-main,
 body[data-page="index"].input-half-screen .input-main-inner {
-  flex: 1;
+  height: 100%;
   display: flex;
   flex-direction: column;
 }
@@ -820,7 +831,27 @@ body[data-page="index"].input-half-screen .input-main-inner {
 body[data-page="index"].input-half-screen .input-textarea {
   flex: 1;
   max-height: none;
-  resize: none;
+}
+
+/* 响应式 */
+@media (max-width: 900px) {
+  body[data-page="index"] .main-layout {
+      grid-template-columns: 1fr;
+      padding-bottom: 0;
+  }
+  body[data-page="index"] .input-bar {
+      position: static;
+      padding: 0;
+      background: var(--bg-elevated);
+      border-top: 1px solid var(--border-soft);
+  }
+  body[data-page="index"] .input-container {
+      max-width: 100%;
+      border-radius: 0;
+      border: none;
+      background: transparent !important; /* 移动端背景透明 */
+      box-shadow: none;
+  }
 }
 
 /* --- B. 设置页面 (Settings Page) --- */
