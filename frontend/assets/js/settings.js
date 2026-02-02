@@ -1,55 +1,96 @@
 (function () {
-  const themeSelect = document.getElementById("theme-select");
-  const backgroundSelect = document.getElementById("background-select");
-  const postprocessingRulesEl = document.getElementById("postprocessing-rules");
+  // --- UI 元素引用 ---
+  // Tabs
+  const tabButtons = document.querySelectorAll('.settings-tab-btn');
+  const tabPanes = document.querySelectorAll('.tab-pane');
 
+  // Visual Selectors
+  const themeOptions = document.querySelectorAll('#theme-grid .visual-option');
+  const bgOptions = document.querySelectorAll('#bg-grid .visual-option');
+
+  // Form Fields
+  const postprocessingRulesEl = document.getElementById("postprocessing-rules");
   const summaryEnabledEl = document.getElementById("summary-enabled");
   const summaryProfileIdEl = document.getElementById("summary-profile-id");
   const summaryFrequencyEl = document.getElementById("summary-frequency");
   const summaryRagConfigEl = document.getElementById("summary-rag-config");
-
   const variablesEnabledEl = document.getElementById("variables-enabled");
   const variablesProfileIdEl = document.getElementById("variables-profile-id");
   const variablesApiConfigIdEl = document.getElementById("variables-api-config-id");
   const alignmentStrictEl = document.getElementById("alignment-strict");
   const alignmentRuleIdEl = document.getElementById("alignment-rule-id");
-
   const textoptEnabledEl = document.getElementById("textopt-enabled");
   const textoptProfileIdEl = document.getElementById("textopt-profile-id");
   const worldEvolutionEnabledEl = document.getElementById("world-evolution-enabled");
   const worldEvolutionProfileIdEl = document.getElementById("world-evolution-profile-id");
-
   const defaultProfilesEl = document.getElementById("default-profiles");
+
+  // Actions
   const loadBtn = document.getElementById("settings-load-btn");
   const saveBtn = document.getElementById("settings-save-btn");
   const statusEl = document.getElementById("settings-status");
 
-  function applyTheme(theme) {
-    if (theme === "light") {
-      document.documentElement.style.setProperty("--bg-main", "#f5f7ff");
-      document.documentElement.style.setProperty("--bg-elevated", "#ffffff");
-      document.documentElement.style.setProperty("--bg-elevated-alt", "#f0f3ff");
-      document.documentElement.style.setProperty("--text-primary", "#151824");
-      document.documentElement.style.setProperty("--text-secondary", "#6b7085");
-    } else {
-      document.documentElement.style.removeProperty("--bg-main");
-      document.documentElement.style.removeProperty("--bg-elevated");
-      document.documentElement.style.removeProperty("--bg-elevated-alt");
-      document.documentElement.style.removeProperty("--text-primary");
-      document.documentElement.style.removeProperty("--text-secondary");
+  // State
+  let currentSettings = {};
+
+  // --- 1. 核心逻辑：应用主题 ---
+  function applyVisuals(theme, bg) {
+    // 1. 设置 Data Theme + 本地存储
+    if (theme) {
+      document.documentElement.setAttribute('data-theme', theme);
+      localStorage.setItem('app_theme', theme);
+
+      // 更新 UI 选择状态
+      themeOptions.forEach(opt => {
+        if (opt.dataset.value === theme) opt.classList.add('selected');
+        else opt.classList.remove('selected');
+      });
+    }
+
+    // 2. 设置 Background Class + 本地存储
+    if (bg) {
+      // 移除旧的 bg-* 类
+      document.body.classList.forEach(cls => {
+        if (cls.startsWith('bg-')) document.body.classList.remove(cls);
+      });
+      document.body.classList.add(`bg-${bg}`);
+      localStorage.setItem('app_bg', bg);
+
+      // 更新 UI 选择状态
+      bgOptions.forEach(opt => {
+        if (opt.dataset.value === bg) opt.classList.add('selected');
+        else opt.classList.remove('selected');
+      });
     }
   }
 
+
+// --- 2. 交互逻辑：Tab 切换 ---
+  function switchTab(targetId) {
+    // 按钮状态
+    tabButtons.forEach(btn => {
+      if (btn.dataset.target === targetId) btn.classList.add('active');
+      else btn.classList.remove('active');
+    });
+    // 面板显隐
+    tabPanes.forEach(pane => {
+      if (pane.id === targetId) pane.classList.add('active');
+      else pane.classList.remove('active');
+    });
+  }
+
+  // --- 3. 数据处理：填充表单 ---
   function populateForm(settings) {
+    currentSettings = settings; // Cache
     const ui = settings.ui || {};
-    themeSelect.value = ui.theme || "dark";
-    backgroundSelect.value = ui.background || "grid";
+
+    // 统一通过 applyVisuals 应用主题和背景（内部会同步到 localStorage）
+    applyVisuals(ui.theme || 'dark', ui.background || 'grid');
+
+    // 填充文本域
     postprocessingRulesEl.value = JSON.stringify(
-      settings.text && settings.text.post_processing_rules
-        ? settings.text.post_processing_rules
-        : [],
-      null,
-      2
+      settings.text && settings.text.post_processing_rules ? settings.text.post_processing_rules : [],
+      null, 2
     );
 
     const summary = settings.summary || {};
@@ -75,40 +116,40 @@
 
     const defaults = settings.default_profiles || {};
     defaultProfilesEl.value = JSON.stringify(defaults, null, 2);
-
-    applyTheme(themeSelect.value);
   }
 
+  // --- 4. 数据处理：收集表单 ---
   function collectForm() {
-    let postRules = [];
-    let ragConfig = {};
-    let defaultProfiles = {};
+    // 获取当前选中的 theme 和 bg
+    const activeThemeEl = document.querySelector('#theme-grid .visual-option.selected');
+    const activeBgEl = document.querySelector('#bg-grid .visual-option.selected');
+
+    const themeVal = activeThemeEl ? activeThemeEl.dataset.value : 'dark';
+    const bgVal = activeBgEl ? activeBgEl.dataset.value : 'grid';
+
+    // JSON 安全解析助手
+    const safeParse = (el, name) => {
+      try {
+        return el.value.trim() ? JSON.parse(el.value) : (name === 'rules' ? [] : {});
+      } catch (e) {
+        alert(`${name} JSON 格式错误，请检查！`);
+        throw e;
+      }
+    };
+
+    let postRules, ragConfig, defaultProfiles;
     try {
-      postRules = postprocessingRulesEl.value.trim()
-        ? JSON.parse(postprocessingRulesEl.value)
-        : [];
+      postRules = safeParse(postprocessingRulesEl, 'rules');
+      ragConfig = safeParse(summaryRagConfigEl, 'rag');
+      defaultProfiles = safeParse(defaultProfilesEl, 'profiles');
     } catch (e) {
-      statusEl.textContent = "正文正则规则 JSON 解析失败。";
-    }
-    try {
-      ragConfig = summaryRagConfigEl.value.trim()
-        ? JSON.parse(summaryRagConfigEl.value)
-        : {};
-    } catch (e) {
-      statusEl.textContent = "RAG 配置 JSON 解析失败。";
-    }
-    try {
-      defaultProfiles = defaultProfilesEl.value.trim()
-        ? JSON.parse(defaultProfilesEl.value)
-        : {};
-    } catch (e) {
-      statusEl.textContent = "默认 Profile 映射 JSON 解析失败。";
+      return null; // 停止保存
     }
 
-    const settings = {
+    return {
       ui: {
-        theme: themeSelect.value,
-        background: backgroundSelect.value
+        theme: themeVal,
+        background: bgVal
       },
       text: {
         post_processing_rules: postRules
@@ -136,58 +177,75 @@
       },
       default_profiles: defaultProfiles
     };
-
-    return settings;
   }
 
+  // --- 5. API 交互 ---
   async function loadSettings() {
-    statusEl.textContent = "正在从后端加载设置...";
+    statusEl.textContent = "加载中...";
     try {
       const resp = await fetch("/api/settings/global");
-      if (!resp.ok) {
-        throw new Error("HTTP " + resp.status);
-      }
+      if (!resp.ok) throw new Error("HTTP " + resp.status);
       const data = await resp.json();
       populateForm(data);
-      statusEl.textContent = "已加载。";
+      statusEl.textContent = "已加载";
+      setTimeout(() => statusEl.textContent = "就绪", 2000);
     } catch (err) {
       console.error(err);
-      statusEl.textContent = "加载失败：" + err.message;
+      statusEl.textContent = "加载失败";
     }
   }
 
   async function saveSettings() {
     const settings = collectForm();
-    statusEl.textContent = "正在保存设置...";
+    if (!settings) return; // JSON 错误已弹窗
+
+    // 在前端立即应用主题与背景（会同时写入 localStorage）
+    applyVisuals(settings.ui.theme, settings.ui.background);
+
+    statusEl.textContent = "保存中...";
     try {
       const resp = await fetch("/api/settings/global", {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(settings)
       });
-      if (!resp.ok) {
-        const t = await resp.text();
-        throw new Error("HTTP " + resp.status + " " + t);
-      }
-      statusEl.textContent = "保存成功。";
+      if (!resp.ok) throw new Error("HTTP " + resp.status);
+      statusEl.textContent = "保存成功";
+      setTimeout(() => statusEl.textContent = "就绪", 2000);
     } catch (err) {
       console.error(err);
-      statusEl.textContent = "保存失败：" + err.message;
+      statusEl.textContent = "保存失败";
     }
   }
 
+
+  // --- 6. 事件绑定 ---
   function bindEvents() {
-    loadBtn.addEventListener("click", function () {
-      loadSettings();
+    // Tabs
+    tabButtons.forEach(btn => {
+      btn.addEventListener('click', () => switchTab(btn.dataset.target));
     });
-    saveBtn.addEventListener("click", function () {
-      saveSettings();
+
+    // Visual Selectors (Theme)
+    themeOptions.forEach(opt => {
+      opt.addEventListener('click', () => {
+        applyVisuals(opt.dataset.value, null); // 仅切换主题
+      });
     });
-    themeSelect.addEventListener("change", function () {
-      applyTheme(themeSelect.value);
+
+    // Visual Selectors (Background)
+    bgOptions.forEach(opt => {
+      opt.addEventListener('click', () => {
+        applyVisuals(null, opt.dataset.value); // 仅切换背景
+      });
     });
+
+    // Buttons
+    loadBtn.addEventListener("click", loadSettings);
+    saveBtn.addEventListener("click", saveSettings);
   }
 
+  // --- 初始化 ---
   function init() {
     bindEvents();
     loadSettings();
