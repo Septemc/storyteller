@@ -1,4 +1,9 @@
+/**
+ * Storyteller - 世界书管理逻辑
+ * 核心功能：导入 JSON、条件搜索、分页列表、结构化详情展示
+ */
 (function () {
+  // --- DOM 元素获取 ---
   const fileInput = document.getElementById("worldbook-file-input");
   const importBtn = document.getElementById("worldbook-import-btn");
   const importStatusEl = document.getElementById("worldbook-import-status");
@@ -14,29 +19,31 @@
 
   const detailEl = document.getElementById("worldbook-detail");
 
+  // --- 状态变量 ---
   let currentPage = 1;
-  let lastKeyword = "";
-  let lastCategory = "";
 
+  /**
+   * 导入世界书 JSON 文件
+   */
   async function importWorldbook() {
     const file = fileInput.files[0];
     if (!file) {
-      importStatusEl.textContent = "请选择 JSON 文件。";
+      showStatus("请选择 JSON 文件。", "danger");
       return;
     }
 
-    importStatusEl.textContent = "正在读取文件...";
+    showStatus("正在读取文件...", "muted");
     try {
       const text = await file.text();
       let jsonData;
       try {
         jsonData = JSON.parse(text);
       } catch (e) {
-        importStatusEl.textContent = "文件不是合法的 JSON。";
+        showStatus("文件格式错误：非标准 JSON。", "danger");
         return;
       }
 
-      importStatusEl.textContent = "正在上传至后端...";
+      showStatus("正在同步至后端知识库...", "muted");
       const resp = await fetch("/api/worldbook/import", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -45,23 +52,24 @@
 
       if (!resp.ok) {
         const msg = await resp.text();
-        throw new Error("HTTP " + resp.status + " " + msg);
+        throw new Error(`HTTP ${resp.status}: ${msg}`);
       }
 
-      importStatusEl.textContent = "导入成功。";
+      showStatus("导入成功，数据已就绪。", "accent");
       currentPage = 1;
       loadWorldbookList();
     } catch (err) {
       console.error(err);
-      importStatusEl.textContent = "导入失败：" + err.message;
+      showStatus("导入失败：" + err.message, "danger");
     }
   }
 
+  /**
+   * 加载世界书列表（含搜索与分页）
+   */
   async function loadWorldbookList() {
     const keyword = searchKeywordEl.value.trim();
     const category = searchCategoryEl.value;
-    lastKeyword = keyword;
-    lastCategory = category;
 
     const params = new URLSearchParams();
     params.set("page", String(currentPage));
@@ -70,119 +78,158 @@
 
     try {
       const resp = await fetch("/api/worldbook/list?" + params.toString());
-      if (!resp.ok) {
-        throw new Error("HTTP " + resp.status);
-      }
+      if (!resp.ok) throw new Error("无法获取列表数据");
+      
       const data = await resp.json();
-
-      const entries = data.items || [];
-      tableBodyEl.innerHTML = "";
-      entries.forEach(function (entry) {
-        const tr = document.createElement("tr");
-        tr.dataset.entryId = entry.entry_id;
-
-        const tdId = document.createElement("td");
-        tdId.textContent = entry.entry_id;
-
-        const tdCat = document.createElement("td");
-        tdCat.textContent = entry.category;
-
-        const tdTitle = document.createElement("td");
-        tdTitle.textContent = entry.title;
-
-        const tdImp = document.createElement("td");
-        tdImp.textContent = typeof entry.importance === "number" ? entry.importance.toFixed(2) : "";
-
-        tr.appendChild(tdId);
-        tr.appendChild(tdCat);
-        tr.appendChild(tdTitle);
-        tr.appendChild(tdImp);
-
-        tr.addEventListener("click", function () {
-          loadWorldbookDetail(entry.entry_id);
-        });
-
-        tableBodyEl.appendChild(tr);
-      });
-
-      const page = data.page || currentPage;
-      const totalPages = data.total_pages || page;
-      currentPage = page;
-      pageInfoEl.textContent = "第 " + page + " 页 / 共 " + totalPages + " 页";
-
-      prevPageBtn.disabled = page <= 1;
-      nextPageBtn.disabled = page >= totalPages;
+      renderTable(data.items || []);
+      renderPagination(data.page, data.total_pages);
     } catch (err) {
       console.error(err);
-      tableBodyEl.innerHTML = "";
-      const tr = document.createElement("tr");
-      const td = document.createElement("td");
-      td.colSpan = 4;
-      td.textContent = "加载失败：" + err.message;
-      tr.appendChild(td);
-      tableBodyEl.appendChild(tr);
+      tableBodyEl.innerHTML = `<tr><td colspan="4" class="muted">加载失败: ${err.message}</td></tr>`;
     }
   }
 
+  /**
+   * 渲染表格行
+   */
+  function renderTable(entries) {
+    tableBodyEl.innerHTML = "";
+    if (entries.length === 0) {
+      tableBodyEl.innerHTML = '<tr><td colspan="4" class="muted" style="text-align:center;">无匹配条目</td></tr>';
+      return;
+    }
+
+    entries.forEach(entry => {
+      const tr = document.createElement("tr");
+      tr.className = "fade-in";
+      tr.innerHTML = `
+        <td><span class="small-text muted">${entry.entry_id}</span></td>
+        <td><span class="tag-item" style="font-size:10px">${entry.category}</span></td>
+        <td style="font-weight:500">${entry.title}</td>
+        <td><span style="color:var(--accent)">${(entry.importance || 0).toFixed(2)}</span></td>
+      `;
+      tr.addEventListener("click", () => {
+        // 视觉反馈：高亮选中行
+        document.querySelectorAll('#worldbook-table-body tr').forEach(r => r.classList.remove('active'));
+        tr.classList.add('active');
+        loadWorldbookDetail(entry.entry_id);
+      });
+      tableBodyEl.appendChild(tr);
+    });
+  }
+
+  /**
+   * 加载并渲染条目详情（分块展示核心逻辑）
+   */
   async function loadWorldbookDetail(entryId) {
-    detailEl.textContent = "加载中：" + entryId + "...";
+    detailEl.innerHTML = `<div class="muted small-text">正在调取档案 [${entryId}]...</div>`;
+    
     try {
       const resp = await fetch("/api/worldbook/" + encodeURIComponent(entryId));
-      if (!resp.ok) {
-        throw new Error("HTTP " + resp.status);
-      }
+      if (!resp.ok) throw new Error("详情调取失败");
       const data = await resp.json();
 
-      const content = data.content || "";
-      const tags = data.tags || [];
-      const meta = data.meta || {};
+      // 1. 构建头部信息 (ID, 标题, 标签)
+      const tagsHtml = (data.tags || []).map(t => `<span class="tag-item">${escapeHtml(t)}</span>`).join("");
+      
+      // 2. 解析 Meta 字段为属性块 (Blocks)
+      let metaHtml = "";
+      if (data.meta && Object.keys(data.meta).length > 0) {
+        metaHtml = `
+          <div class="sidebar-subtitle">扩展属性 (Meta Information)</div>
+          <div class="stats-grid" style="grid-template-columns: repeat(2, 1fr); gap: 10px; margin-bottom: 20px;">
+            ${Object.entries(data.meta).map(([key, val]) => `
+              <div class="stat-box" style="text-align: left;">
+                <div class="small-text muted" style="text-transform: uppercase;">${key}</div>
+                <div class="stat-val" style="font-size: 13px;">${escapeHtml(val)}</div>
+              </div>
+            `).join("")}
+          </div>`;
+      }
 
-      const html = [
-        "<div><strong>ID：</strong>" + escapeHtml(data.entry_id || "") + "</div>",
-        "<div><strong>类别：</strong>" + escapeHtml(data.category || "") + "</div>",
-        "<div><strong>标题：</strong>" + escapeHtml(data.title || "") + "</div>",
-        "<div><strong>标签：</strong>" + escapeHtml(tags.join(", ")) + "</div>",
-        "<div><strong>重要度：</strong>" + (typeof data.importance === "number" ? data.importance.toFixed(2) : "") + "</div>",
-        "<hr>",
-        "<div><strong>内容：</strong></div>",
-        "<pre class=\"small-text\">" + escapeHtml(content) + "</pre>",
-        "<hr>",
-        "<div><strong>元信息：</strong></div>",
-        "<pre class=\"small-text\">" + escapeHtml(JSON.stringify(meta, null, 2)) + "</pre>"
-      ].join("\n");
+      // 3. 组合最终 HTML
+      detailEl.innerHTML = `
+        <div class="fade-in">
+          <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 15px;">
+            <div>
+              <h3 style="margin: 0; color: var(--text-primary);">${escapeHtml(data.title)}</h3>
+              <div class="small-text muted" style="margin-top: 4px;">ID: ${data.entry_id} | 类别: ${data.category}</div>
+            </div>
+            <div class="stat-box" style="padding: 4px 12px;">
+              <div class="small-text muted">重要度</div>
+              <div style="color: var(--accent); font-weight: bold;">${(data.importance || 0).toFixed(2)}</div>
+            </div>
+          </div>
 
-      detailEl.innerHTML = html;
+          <div class="tag-cloud" style="margin-bottom: 20px;">
+            ${tagsHtml}
+          </div>
+
+          <div class="sidebar-subtitle">条目描述 (Content)</div>
+          <div class="story-log" style="background: var(--bg-elevated-alt); font-size: 14px; line-height: 1.6; margin-bottom: 20px; white-space: pre-wrap;">${escapeHtml(data.content)}</div>
+
+          ${metaHtml}
+        </div>
+      `;
     } catch (err) {
-      console.error(err);
-      detailEl.textContent = "详情加载失败：" + err.message;
+      detailEl.innerHTML = `<div class="danger small-text">详情加载失败：${err.message}</div>`;
     }
   }
 
-  function escapeHtml(str) {
-    return String(str)
-      .replace(/&/g, "&amp;")
-      .replace(/</g, "&lt;")
-      .replace(/>/g, "&gt;");
+  /**
+   * 辅助：状态提示
+   */
+  function showStatus(text, type) {
+    importStatusEl.textContent = text;
+    importStatusEl.className = `small-text ${type}`;
   }
 
+  /**
+   * 辅助：分页渲染
+   */
+  function renderPagination(current, total) {
+    currentPage = current;
+    pageInfoEl.textContent = `第 ${current} 页 / 共 ${total || 1} 页`;
+    prevPageBtn.disabled = current <= 1;
+    nextPageBtn.disabled = current >= (total || 1);
+  }
+
+  /**
+   * 辅助：转义 HTML 防止注入
+   */
+  function escapeHtml(str) {
+    return String(str).replace(/[&<>"']/g, m => ({
+      '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;'
+    })[m]);
+  }
+
+  /**
+   * 事件绑定
+   */
   function bindEvents() {
     importBtn.addEventListener("click", importWorldbook);
-    searchBtn.addEventListener("click", function () {
+    searchBtn.addEventListener("click", () => {
       currentPage = 1;
       loadWorldbookList();
     });
-    prevPageBtn.addEventListener("click", function () {
+    prevPageBtn.addEventListener("click", () => {
       if (currentPage > 1) {
-        currentPage -= 1;
+        currentPage--;
         loadWorldbookList();
       }
     });
-    nextPageBtn.addEventListener("click", function () {
-      currentPage += 1;
+    nextPageBtn.addEventListener("click", () => {
+      currentPage++;
       loadWorldbookList();
+    });
+
+    // 监听回车搜索
+    searchKeywordEl.addEventListener("keypress", (e) => {
+      if (e.key === "Enter") searchBtn.click();
     });
   }
 
+  // --- 初始化 ---
   function init() {
     bindEvents();
     loadWorldbookList();

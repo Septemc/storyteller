@@ -7,7 +7,7 @@
   --radius-lg: 18px;    /* 已有：大圆角 */
   --radius-md: 12px;    /* 已有：中等圆角 */
   --radius-sm: 8px;     /* 已有：小圆角 */
-  --radius-xs: 4px;     /* 新增：超小圆角 */
+  --radius-xs: 6px;     /* 新增：超小圆角 */
   --radius-xxs: 2px;    /* 可选：极小圆角 */
   --radius-none: 0;     /* 可选：无圆角 */
   --font-main: system-ui, -apple-system, "Segoe UI", sans-serif;
@@ -397,20 +397,40 @@ body.bg-circuit {
   height: 60px;
 }
 
+/* 父容器：使用 Flex 布局实现垂直居中 */
 .nav-left {
   display: flex;
-  flex-direction: column;
+  flex-direction: column; /* 纵向排列 */
+  justify-content: center; /* 垂直方向居中 */
+  gap: 2px; /* 标题与副标题之间的微小间距 */
 }
 
 .app-title {
-  font-weight: 600;
-  font-size: 16px;
-  letter-spacing: 0.06em;
+  font-family: 'Montserrat', sans-serif;
+  font-weight: 800;
+  font-size: 22px;
+  letter-spacing: 0.05em;
+  line-height: 1.2; /* 控制行高，防止文字自带的留白影响对齐 */
+
+  /* 渐变色效果 */
+  background: linear-gradient(135deg, var(--text-primary), var(--accent));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
 }
 
 .app-subtitle {
-  font-size: 12px;
-  color: var(--text-secondary);
+  font-family: 'Montserrat', sans-serif;
+  font-weight: 500; /* 副标题建议稍微细一点，产生视觉层级感 */
+  font-size: 11px;
+  letter-spacing: 0.02em;
+  line-height: 1;
+
+  /* 如果不需要副标题也用渐变色，可以改为 color: var(--text-secondary); */
+  background: linear-gradient(135deg, var(--text-secondary), var(--accent-soft));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+
+  opacity: 0.8; /* 稍微透明一点，突出主标题 */
 }
 
 .nav-links {
@@ -472,6 +492,7 @@ body.bg-circuit {
   background: var(--bg-elevated-alt);
   border: 1px solid var(--border-soft);
   color: var(--text-secondary);
+  padding: 10px 12px; /* 控制文字与边框的距离 10px是上下距离 12px是左右距离 */
 }
 
 .panel-header {
