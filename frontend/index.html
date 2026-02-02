@@ -5,6 +5,22 @@
   <title>互动小说系统 · 主界面</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <link rel="stylesheet" href="assets/css/style.css">
+  <script>
+    (function() {
+      // 1. 读取本地存储的主题 (如果没有则默认 dark)
+      const savedTheme = localStorage.getItem('app_theme') || 'dark';
+      const savedBg = localStorage.getItem('app_bg') || 'grid';
+
+      // 2. 立即应用到 html 标签 (控制颜色变量)
+      document.documentElement.setAttribute('data-theme', savedTheme);
+
+      // 3. 应用背景纹理 (控制 body class)
+      window.addEventListener('DOMContentLoaded', () => {
+        document.body.className = document.body.className.replace(/\bbg-\S+/g, '').trim();
+        document.body.classList.add('bg-' + savedBg);
+      });
+    })();
+  </script>
 </head>
 <body data-page="index">
   <header class="top-nav">
@@ -22,6 +38,51 @@
   </header>
 
   <main class="main-layout">
+    <!-- 左侧：主观信息（项目相关 + 玩家视角） -->
+    <aside class="side-panel side-panel-left">
+      <section class="sidebar-section">
+        <div class="sidebar-header">
+          <div class="sidebar-title">写作节奏与统计</div>
+        </div>
+        <div class="sidebar-body small-text">
+          <div>本段字数：<span id="stat-words">0</span></div>
+          <div>后端耗时：<span id="stat-duration">0 ms</span></div>
+          <div>前端耗时：<span id="stat-duration-front">0 ms</span></div>
+          <div>会话累计字数：<span id="stat-total-words">0</span></div>
+        </div>
+      </section>
+
+      <section class="sidebar-section">
+        <div class="sidebar-header">
+          <div class="sidebar-title">主角与玩家视角</div>
+        </div>
+        <div class="sidebar-body small-text">
+          <div class="sidebar-subtitle">主角与关键角色</div>
+          <div id="character-summary">
+            <div>加载中...</div>
+          </div>
+
+          <div class="sidebar-subtitle">主观数值与状态</div>
+          <div class="sidebar-kv">
+            <div>经济 / 资源：<span id="var-economy">未知</span></div>
+            <div>能力评级：<span id="var-ability">未知</span></div>
+            <div>势力 / 阵营：<span id="var-faction">未知</span></div>
+          </div>
+
+          <div class="sidebar-subtitle">历史行动输入</div>
+          <div id="action-history" class="action-history">
+            <div class="muted">暂无历史行动，等待你的第一次指令。</div>
+          </div>
+
+          <div class="sidebar-subtitle">物品栏 / 状态栏（预留）</div>
+          <div class="muted small-text">
+            将来可接入主角物品栏、Buff / Debuff 等更细致的数据面板。
+          </div>
+        </div>
+      </section>
+    </aside>
+
+    <!-- 中间：故事进程 -->
     <section class="story-panel">
       <div class="panel-header">
         <div>
@@ -37,10 +98,11 @@
       </div>
     </section>
 
-    <aside class="side-panel">
+    <!-- 右侧：客观信息（当前场景 / 地图 / 世界事件） -->
+    <aside class="side-panel side-panel-right">
       <section class="sidebar-section">
         <div class="sidebar-header">
-          <div class="sidebar-title">副本信息</div>
+          <div class="sidebar-title">当前场景与副本</div>
         </div>
         <div id="dungeon-info" class="sidebar-body small-text">
           <div>当前副本：<span id="dungeon-name">暂无</span></div>
@@ -51,52 +113,123 @@
 
       <section class="sidebar-section">
         <div class="sidebar-header">
-          <div class="sidebar-title">主角与关键角色</div>
+          <div class="sidebar-title">周围人物与势力</div>
         </div>
-        <div id="character-summary" class="sidebar-body small-text">
-          <div>加载中...</div>
-        </div>
-      </section>
-
-      <section class="sidebar-section">
-        <div class="sidebar-header">
-          <div class="sidebar-title">关键数值与变量</div>
-        </div>
-        <div id="variable-summary" class="sidebar-body small-text">
-          <div>经济：<span id="var-economy">未知</span></div>
-          <div>能力：<span id="var-ability">未知</span></div>
-          <div>势力：<span id="var-faction">未知</span></div>
+        <div id="scene-characters-panel" class="sidebar-body small-text">
+          <div class="muted">预留区域：用于展示当前场景的 NPC、势力分布等信息。</div>
         </div>
       </section>
 
       <section class="sidebar-section">
         <div class="sidebar-header">
-          <div class="sidebar-title">本段统计</div>
+          <div class="sidebar-title">地图与世界事件</div>
         </div>
-        <div class="sidebar-body small-text">
-          <div>本段字数：<span id="stat-words">0</span></div>
-          <div>后端耗时：<span id="stat-duration">0 ms</span></div>
-          <div>前端耗时：<span id="stat-duration-front">0 ms</span></div>
-          <div>会话累计字数：<span id="stat-total-words">0</span></div>
+        <div id="world-events-panel" class="sidebar-body small-text">
+          <div class="muted">预留区域：用于展示当前地图与世界线重大事件。</div>
         </div>
       </section>
     </aside>
   </main>
 
-  <footer class="input-bar">
+  <!-- 底部输入栏：可收起 + 下次行动建议 + 半屏书写 -->
+  <footer class="input-bar" id="input-bar">
     <div class="input-container">
-      <label for="user-input" class="input-label">玩家输入 / 操作指令</label>
-      <textarea id="user-input" class="input-textarea" rows="3"
-        placeholder="例如：我走向吧台，与黑袍男子搭话，试探性地打听失踪案。"></textarea>
-      <div class="input-actions">
-        <div class="input-hint small-text" id="input-hint">
-          提示：输入你的操作或想法，然后点击“生成下一段”。
+      <!-- 顶部：标题 + 收起按钮 + 会话 ID -->
+      <div class="input-header-row">
+        <div class="input-header-left">
+          <button
+            type="button"
+            class="icon-button input-collapse-btn"
+            id="input-collapse-toggle"
+            aria-label="收起输入栏"
+            title="点击收起 / 展开底部侧边栏"
+          >
+            ⌄
+          </button>
+          <div class="input-header-text">
+            <div class="input-header-title">玩家输入 / 操作指令</div>
+            <div class="input-header-desc small-text">
+              这是一个可展开 / 收起的底部侧边栏，支持半屏书写模式，Ctrl / Cmd + Enter 快速提交。
+            </div>
+          </div>
         </div>
-        <div class="input-buttons">
-          <button id="generate-btn" class="btn-primary">生成下一段</button>
+        <div class="input-header-right small-text">
+          当前会话：<span id="session-label-inline">初始化中...</span>
         </div>
       </div>
-      <div class="small-text input-status" id="input-status"></div>
+
+      <!-- 可折叠主体区域 -->
+      <div class="input-body" id="input-body">
+        <!-- 下次行动建议：附着在输入框上缘，可展开 / 收起 -->
+        <div class="action-suggestions" id="action-suggestions">
+          <div class="action-suggestions-header">
+            <button
+              type="button"
+              class="action-suggestions-toggle"
+              id="action-suggestions-toggle"
+            >
+              下次行动建议 ▼
+            </button>
+            <span class="small-text muted">
+              灵感不足时，可以点选一条作为起点，再自行润色修改。
+            </span>
+          </div>
+          <div class="action-suggestions-body" id="action-suggestions-body">
+            <button type="button" class="suggestion-chip"
+              data-suggest="我环顾四周，观察当前场景里人物与环境的细节。">
+              观察环境
+            </button>
+            <button type="button" class="suggestion-chip"
+              data-suggest="我尝试与最近的可疑人物搭话，试探性套取关于事件的情报。">
+              与可疑人物交谈
+            </button>
+            <button type="button" class="suggestion-chip"
+              data-suggest="我回顾目前已获取的线索，梳理时间线与人物关系。">
+              整理线索
+            </button>
+            <button type="button" class="suggestion-chip"
+              data-suggest="我检查自己的物品与状态，确认是否有遗漏的道具或伤势。">
+              检查自身状态
+            </button>
+          </div>
+        </div>
+
+        <!-- 输入主区域 -->
+        <div class="input-main">
+          <div class="input-main-inner">
+            <label for="user-input" class="input-label">
+              具体输入 / 操作指令
+            </label>
+            <!-- 放大 / 缩小斜箭头：位于输入区域右上角 -->
+            <button
+              type="button"
+              class="icon-button input-size-toggle"
+              id="input-size-toggle"
+              aria-label="放大输入框"
+              title="半屏书写模式"
+            >
+              ↗
+            </button>
+
+            <textarea
+              id="user-input"
+              class="input-textarea"
+              rows="3"
+              placeholder="例如：我走向吧台，与黑袍男子搭话，试探性地打听失踪案。"
+            ></textarea>
+          </div>
+
+          <div class="input-actions">
+            <div class="input-hint small-text" id="input-hint">
+              提示：输入你的操作或想法，然后点击“生成下一段”，或使用 Ctrl / Cmd + Enter 快速提交。
+            </div>
+            <div class="input-buttons">
+              <button id="generate-btn" class="btn-primary">生成下一段</button>
+            </div>
+          </div>
+          <div class="small-text input-status" id="input-status"></div>
+        </div>
+      </div>
     </div>
   </footer>
 

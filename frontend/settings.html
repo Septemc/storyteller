@@ -2,15 +2,51 @@
 <html lang="zh-CN">
 <head>
   <meta charset="UTF-8">
-  <title>互动小说系统 · 设置</title>
+  <title>Storyteller · 设置中心</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <link rel="stylesheet" href="assets/css/style.css">
+<script>
+    (function() {
+      // 1. 读取本地存储的主题 (如果没有则默认 dark)
+      const savedTheme = localStorage.getItem('app_theme') || 'dark';
+      const savedBg = localStorage.getItem('app_bg') || 'grid';
+
+      // 2. 立即应用到 html 标签 (控制颜色变量)
+      document.documentElement.setAttribute('data-theme', savedTheme);
+
+      // 3. 应用背景纹理 (控制 body class)
+      // 注意：这里需要等待 DOM 解析，或者直接操作 document.write (不推荐)
+      // 最稳妥的方式是监听 DOMContentLoaded，或者放在 body 开始标签后。
+      // 但为了防止闪烁，我们尝试直接在 head 里预设一个 style
+      window.addEventListener('DOMContentLoaded', () => {
+         // 清除所有旧的 bg- 开头的类
+         document.body.className = document.body.className.replace(/\bbg-\S+/g, '').trim();
+         // 添加新的背景类
+         document.body.classList.add('bg-' + savedBg);
+      });
+    })();
+  </script>
+  <style>
+    /* 内联补充样式，用于主题颜色预览块 */
+    .preview-dark { background: #05060a; }
+    .preview-light { background: #f0f2f5; }
+    .preview-cyberpunk { background: linear-gradient(135deg, #000 0%, #0a0a0e 100%); border: 1px solid #0ff; }
+    .preview-scroll { background: #e6dcc3; }
+    .preview-forest { background: #0b1410; }
+    .preview-abyss { background: #0a0000; border: 1px solid #f00; }
+    .preview-royal { background: #120a21; border: 1px solid #ffd700; }
+
+    .preview-bg-grid { background-image: linear-gradient(#333 1px, transparent 1px), linear-gradient(90deg, #333 1px, transparent 1px); background-size: 10px 10px; }
+    .preview-bg-noise { background-color: #222; opacity: 0.8; }
+    .preview-bg-plain { background-color: #222; }
+    .preview-bg-runes { background: radial-gradient(circle, #444 0%, #222 100%); }
+    .preview-bg-circuit { background-image: radial-gradient(#444 20%, transparent 20%); background-size: 5px 5px; }
+  </style>
 </head>
-<body data-page="settings">
-  <header class="top-nav">
+<body data-page="settings"> <header class="top-nav">
     <div class="nav-left">
-      <span class="app-title">互动小说系统</span>
-      <span class="app-subtitle">系统设置</span>
+      <span class="app-title">Storyteller</span>
+      <span class="app-subtitle">互动小说引擎</span>
     </div>
     <nav class="nav-links">
       <a href="index.html" class="nav-link">剧情</a>
@@ -21,145 +57,208 @@
     </nav>
   </header>
 
-  <main class="settings-layout">
-    <section class="settings-panel">
-      <div class="panel-header">
-        <div class="panel-title">界面与显示</div>
-      </div>
-      <div class="settings-section">
-        <label class="form-label">主题模式</label>
-        <select id="theme-select" class="form-select">
-          <option value="dark">深色</option>
-          <option value="light">浅色</option>
-        </select>
+  <main class="settings-container">
+
+    <aside class="settings-sidebar">
+      <button class="settings-tab-btn active" data-target="tab-ui">
+        <span class="icon">🎨</span> 界面与显示
+      </button>
+      <button class="settings-tab-btn" data-target="tab-memory">
+        <span class="icon">🧠</span> 摘要与记忆
+      </button>
+      <button class="settings-tab-btn" data-target="tab-alignment">
+        <span class="icon">⚖️</span> 变量与对齐
+      </button>
+      <button class="settings-tab-btn" data-target="tab-evolution">
+        <span class="icon">🌍</span> 正文与演化
+      </button>
+      <button class="settings-tab-btn" data-target="tab-models">
+        <span class="icon">🔗</span> 全局模型绑定
+      </button>
+    </aside>
+
+    <section class="settings-content-area">
+
+      <div class="settings-header-actions">
+        <span id="settings-status" class="small-text muted">就绪</span>
+        <button id="settings-load-btn" class="btn-secondary btn-small">重置/加载</button>
+        <button id="settings-save-btn" class="btn-primary btn-small">保存所有更改</button>
       </div>
 
-      <div class="settings-section">
-        <label class="form-label">背景风格</label>
-        <select id="background-select" class="form-select">
-          <option value="grid">网格背景</option>
-          <option value="noise">轻微噪点</option>
-          <option value="plain">纯色</option>
-        </select>
+      <div id="tab-ui" class="tab-pane active">
+        <h2 class="section-title">主题风格 (Theme)</h2>
+        <div class="visual-grid" id="theme-grid">
+          <div class="visual-option" data-value="dark">
+            <div class="color-preview preview-dark"></div>
+            <div class="option-label">深空 (默认)</div>
+          </div>
+          <div class="visual-option" data-value="light">
+            <div class="color-preview preview-light"></div>
+            <div class="option-label">晨曦</div>
+          </div>
+          <div class="visual-option" data-value="cyberpunk">
+            <div class="color-preview preview-cyberpunk"></div>
+            <div class="option-label">赛博霓虹</div>
+          </div>
+          <div class="visual-option" data-value="scroll">
+            <div class="color-preview preview-scroll"></div>
+            <div class="option-label">羊皮卷</div>
+          </div>
+          <div class="visual-option" data-value="forest">
+            <div class="color-preview preview-forest"></div>
+            <div class="option-label">迷雾森林</div>
+          </div>
+          <div class="visual-option" data-value="abyss">
+            <div class="color-preview preview-abyss"></div>
+            <div class="option-label">猩红深渊</div>
+          </div>
+          <div class="visual-option" data-value="royal">
+            <div class="color-preview preview-royal"></div>
+            <div class="option-label">皇家紫金</div>
+          </div>
+        </div>
+
+        <h2 class="section-title">背景纹理 (Background)</h2>
+        <div class="visual-grid" id="bg-grid">
+          <div class="visual-option" data-value="grid">
+            <div class="color-preview preview-bg-grid"></div>
+            <div class="option-label">全息网格</div>
+          </div>
+          <div class="visual-option" data-value="noise">
+            <div class="color-preview preview-bg-noise"></div>
+            <div class="option-label">胶片噪点</div>
+          </div>
+          <div class="visual-option" data-value="plain">
+            <div class="color-preview preview-bg-plain"></div>
+            <div class="option-label">纯净虚空</div>
+          </div>
+          <div class="visual-option" data-value="runes">
+            <div class="color-preview preview-bg-runes"></div>
+            <div class="option-label">魔法力场</div>
+          </div>
+          <div class="visual-option" data-value="circuit">
+            <div class="color-preview preview-bg-circuit"></div>
+            <div class="option-label">集成电路</div>
+          </div>
+        </div>
+
+        <div class="settings-section">
+            <label class="form-label">后处理正则规则 (JSON)</label>
+            <textarea id="postprocessing-rules" class="form-textarea" rows="4"
+              placeholder='清洗正文内容的正则，例如：[{"pattern": "...", "replacement": ""}]'></textarea>
+            <div class="small-text muted" style="margin-top:4px">用于在显示前清理 LLM 输出的多余符号。</div>
+        </div>
       </div>
 
-      <div class="settings-section">
-        <label class="form-label">正文后处理正则规则（JSON）</label>
-        <textarea id="postprocessing-rules" class="form-textarea" rows="5"
-          placeholder='例如：[{"id": "fix_punctuation", "pattern": "\\s+([，。！？])", "replacement": "$1", "scope": "both"}]'></textarea>
-      </div>
-    </section>
+      <div id="tab-memory" class="tab-pane">
+        <h2 class="section-title">自动摘要与 RAG</h2>
+        <div class="settings-section">
+          <label class="form-check">
+            <input type="checkbox" id="summary-enabled">
+            <span>启用自动剧情摘要</span>
+          </label>
+          <div class="small-text muted" style="margin-left: 22px;">系统将在达到一定字数后自动调用 LLM 总结剧情。</div>
+        </div>
 
-    <section class="settings-panel">
-      <div class="panel-header">
-        <div class="panel-title">摘要与记忆</div>
-      </div>
+        <div class="half-grid">
+            <div class="settings-section">
+                <label class="form-label">摘要 Profile ID</label>
+                <input id="summary-profile-id" class="form-input" placeholder="如：summary_v1">
+            </div>
+            <div class="settings-section">
+                <label class="form-label">触发频率 (每 N 段对话)</label>
+                <input id="summary-frequency" class="form-input" type="number" min="1" value="1">
+            </div>
+        </div>
 
-      <div class="settings-section">
-        <label class="form-check">
-          <input type="checkbox" id="summary-enabled">
-          <span>启用自动摘要与分段记忆</span>
-        </label>
-      </div>
-
-      <div class="settings-section">
-        <label class="form-label">摘要 Profile ID</label>
-        <input id="summary-profile-id" class="form-input" placeholder="如：summary_v1">
-      </div>
-
-      <div class="settings-section">
-        <label class="form-label">场景级摘要频率（每几段剧情）</label>
-        <input id="summary-frequency" class="form-input" type="number" min="1" value="1">
-      </div>
-
-      <div class="settings-section">
-        <label class="form-label">历史 RAG 策略（JSON）</label>
-        <textarea id="summary-rag-config" class="form-textarea" rows="4"
-          placeholder='例如：{"scene_top_k": 3, "chapter_top_k": 1, "use_raw_segments": true}'></textarea>
-      </div>
-    </section>
-
-    <section class="settings-panel">
-      <div class="panel-header">
-        <div class="panel-title">变量思考与数据对齐</div>
+        <div class="settings-section">
+          <label class="form-label">历史记忆检索策略 (RAG Config JSON)</label>
+          <textarea id="summary-rag-config" class="form-textarea" rows="6" placeholder='例如：
+              {
+                "scene_top_k": 3,
+                "chapter_top_k": 1,
+                "use_raw_segments": true
+              }'></textarea>
+        </div>
       </div>
 
-      <div class="settings-section">
-        <label class="form-check">
-          <input type="checkbox" id="variables-enabled">
-          <span>启用数据变量思考</span>
-        </label>
+      <div id="tab-alignment" class="tab-pane">
+        <h2 class="section-title">数值思考与数据一致性</h2>
+        <div class="settings-section">
+            <label class="form-check">
+              <input type="checkbox" id="variables-enabled">
+              <span>启用变量追踪 (Variable Tracking)</span>
+            </label>
+        </div>
+
+        <div class="half-grid">
+            <div class="settings-section">
+                <label class="form-label">变量思考 Profile ID</label>
+                <input id="variables-profile-id" class="form-input" placeholder="用于分析数值变化的 Prompt">
+            </div>
+            <div class="settings-section">
+                <label class="form-label">独立 API Config ID</label>
+                <input id="variables-api-config-id" class="form-input" placeholder="建议使用廉价高速模型">
+            </div>
+        </div>
+
+        <div class="settings-section" style="margin-top: 20px; border-top: 1px solid var(--border-soft); padding-top: 15px;">
+            <label class="form-check">
+              <input type="checkbox" id="alignment-strict">
+              <span>启用严格对齐检查 (Strict Alignment)</span>
+            </label>
+            <div class="small-text muted" style="margin-left: 22px;">防止生成的数值超出角色模板定义的范围。</div>
+        </div>
+        <div class="settings-section">
+            <label class="form-label">对齐规则 ID</label>
+            <input id="alignment-rule-id" class="form-input" placeholder="如：default_alignment">
+        </div>
       </div>
 
-      <div class="settings-section">
-        <label class="form-label">变量思考 Profile ID</label>
-        <input id="variables-profile-id" class="form-input" placeholder="如：variable_thinking_v1">
+      <div id="tab-evolution" class="tab-pane">
+        <h2 class="section-title">文本优化与世界演化</h2>
+
+        <div class="settings-section">
+            <label class="form-check">
+              <input type="checkbox" id="textopt-enabled">
+              <span>启用文笔润色 (Text Polishing)</span>
+            </label>
+            <div class="settings-section" style="margin-top:8px">
+                <label class="form-label">润色 Profile ID</label>
+                <input id="textopt-profile-id" class="form-input" placeholder="如：text_opt_v1">
+            </div>
+        </div>
+
+        <div class="settings-section" style="margin-top: 20px;">
+            <label class="form-check">
+              <input type="checkbox" id="world-evolution-enabled">
+              <span>启用世界动态演化 (World Evolution)</span>
+            </label>
+            <div class="small-text muted" style="margin-left: 22px;">允许 NPC 在玩家不在场时根据世界书规则发生状态变更。</div>
+            <div class="settings-section" style="margin-top:8px">
+                <label class="form-label">演化逻辑 Profile ID</label>
+                <input id="world-evolution-profile-id" class="form-input" placeholder="如：world_evolution_v1">
+            </div>
+        </div>
       </div>
 
-      <div class="settings-section">
-        <label class="form-label">变量思考 API 配置 ID</label>
-        <input id="variables-api-config-id" class="form-input" placeholder="如：default_variable_model">
+      <div id="tab-models" class="tab-pane">
+        <h2 class="section-title">默认 Profile 映射</h2>
+        <div class="settings-section">
+            <div class="small-text muted" style="margin-bottom: 8px;">
+                此处定义系统各模块默认调用的 Prompt/Model 配置。
+            </div>
+            <label class="form-label">Global Default Profiles (JSON)</label>
+            <textarea id="default-profiles" class="form-textarea" rows="12" placeholder='{
+                "story_generation": "story_gen_v2",
+                "npc_chat": "npc_chat_standard",
+                "dungeon_master": "dm_hardcore",
+                "summary": "summary_fast",
+                "variable_thinking": "math_solver"
+              }'></textarea>
+        </div>
       </div>
 
-      <div class="settings-section">
-        <label class="form-check">
-          <input type="checkbox" id="alignment-strict">
-          <span>启用严格数据对齐检查</span>
-        </label>
-      </div>
-
-      <div class="settings-section">
-        <label class="form-label">对齐规则 ID</label>
-        <input id="alignment-rule-id" class="form-input" placeholder="如：default_alignment">
-      </div>
-    </section>
-
-    <section class="settings-panel">
-      <div class="panel-header">
-        <div class="panel-title">正文优化与世界演化</div>
-      </div>
-
-      <div class="settings-section">
-        <label class="form-check">
-          <input type="checkbox" id="textopt-enabled">
-          <span>启用正文语言优化</span>
-        </label>
-      </div>
-
-      <div class="settings-section">
-        <label class="form-label">正文优化 Profile ID</label>
-        <input id="textopt-profile-id" class="form-input" placeholder="如：text_opt_v1">
-      </div>
-
-      <div class="settings-section">
-        <label class="form-check">
-          <input type="checkbox" id="world-evolution-enabled">
-          <span>启用世界演化</span>
-        </label>
-      </div>
-
-      <div class="settings-section">
-        <label class="form-label">世界演化 Profile ID</label>
-        <input id="world-evolution-profile-id" class="form-input" placeholder="如：world_evolution_v1">
-      </div>
-    </section>
-
-    <section class="settings-panel">
-      <div class="panel-header">
-        <div class="panel-title">全局模型与 Profile 绑定</div>
-      </div>
-
-      <div class="settings-section">
-        <label class="form-label">默认 Profile 映射（JSON）</label>
-        <textarea id="default-profiles" class="form-textarea" rows="6"
-          placeholder='例如：{"story_generation": "story_generation_v1","summary":"summary_v1","variable_thinking":"variable_thinking_v1"}'></textarea>
-      </div>
-
-      <div class="settings-section">
-        <button id="settings-load-btn" class="btn-secondary">从后端加载设置</button>
-        <button id="settings-save-btn" class="btn-primary">保存设置</button>
-        <span id="settings-status" class="small-text"></span>
-      </div>
     </section>
   </main>
 

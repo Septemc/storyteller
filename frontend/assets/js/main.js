@@ -1,10 +1,19 @@
+// assets/js/main.js
 (function () {
   const storyLogEl = document.getElementById("story-log");
   const generateBtn = document.getElementById("generate-btn");
   const userInputEl = document.getElementById("user-input");
   const inputStatusEl = document.getElementById("input-status");
   const sessionLabelEl = document.getElementById("session-label");
+  const sessionLabelInlineEl = document.getElementById("session-label-inline");
   const newSessionBtn = document.getElementById("new-session-btn");
+
+  const actionHistoryEl = document.getElementById("action-history");
+  const inputBarEl = document.getElementById("input-bar");
+  const inputCollapseToggleEl = document.getElementById("input-collapse-toggle");
+  const inputSizeToggleEl = document.getElementById("input-size-toggle");
+  const actionSuggestionsEl = document.getElementById("action-suggestions");
+  const actionSuggestionsToggleEl = document.getElementById("action-suggestions-toggle");
 
   const statWordsEl = document.getElementById("stat-words");
   const statDurationEl = document.getElementById("stat-duration");
@@ -23,38 +32,63 @@
   let currentSessionId = null;
   let totalWordCount = 0;
 
-  function ensureSession() {
-    const cached = window.localStorage.getItem("novel_session_id");
-    if (cached) {
-      currentSessionId = cached;
-    } else {
-      currentSessionId = generateSessionId();
-      window.localStorage.setItem("novel_session_id", currentSessionId);
-    }
-    updateSessionLabel();
+  function generateSessionId() {
+    const now = Date.now();
+    const randomPart = Math.floor(Math.random() * 1e6)
+      .toString()
+      .padStart(6, "0");
+    return "S_" + now + "_" + randomPart;
   }
 
-  function generateSessionId() {
-    const rand = Math.floor(Math.random() * 1e6);
-    return "S_" + Date.now().toString() + "_" + rand.toString();
+  function ensureSession() {
+    let savedId = window.localStorage.getItem("novel_session_id");
+    if (!savedId) {
+      savedId = generateSessionId();
+      window.localStorage.setItem("novel_session_id", savedId);
+    }
+    currentSessionId = savedId;
+    updateSessionLabel();
   }
 
   function resetSession() {
     currentSessionId = generateSessionId();
     window.localStorage.setItem("novel_session_id", currentSessionId);
     totalWordCount = 0;
-    statTotalWordsEl.textContent = "0";
-    storyLogEl.innerHTML = "";
+
+    if (statTotalWordsEl) {
+      statTotalWordsEl.textContent = "0";
+    }
+    if (storyLogEl) {
+      storyLogEl.innerHTML = "";
+    }
+
     updateSessionLabel();
-    inputStatusEl.textContent = "已创建新会话。";
+
+    if (inputStatusEl) {
+      inputStatusEl.textContent = "已创建新会话。";
+    }
+
+    if (actionHistoryEl) {
+      actionHistoryEl.innerHTML = "";
+      const placeholder = document.createElement("div");
+      placeholder.className = "muted";
+      placeholder.textContent = "暂无历史行动，等待你的第一次指令。";
+      actionHistoryEl.appendChild(placeholder);
+    }
   }
 
   function updateSessionLabel() {
-    if (!sessionLabelEl) return;
-    sessionLabelEl.textContent = "当前会话 ID：" + currentSessionId;
+    if (sessionLabelEl) {
+      sessionLabelEl.textContent = "当前会话 ID：" + currentSessionId;
+    }
+    if (sessionLabelInlineEl) {
+      sessionLabelInlineEl.textContent = currentSessionId || "初始化中...";
+    }
   }
 
   function appendStoryBlock(text, meta, type) {
+    if (!storyLogEl) return;
+
     const block = document.createElement("div");
     block.className = "story-block" + (type === "user" ? " story-block-user" : "");
 
@@ -63,7 +97,8 @@
     if (type === "user") {
       metaEl.textContent = "玩家输入";
     } else {
-      const tags = (meta && meta.tags && meta.tags.length) ? " · " + meta.tags.join(", ") : "";
+      const tags =
+        meta && meta.tags && meta.tags.length ? " · " + meta.tags.join(", ") : "";
       const tone = meta && meta.tone ? "基调：" + meta.tone : "";
       const pacing = meta && meta.pacing ? "节奏：" + meta.pacing : "";
       const infoParts = [];
@@ -83,10 +118,31 @@
     storyLogEl.scrollTop = storyLogEl.scrollHeight;
   }
 
+  function appendActionHistory(text) {
+    if (!actionHistoryEl) return;
+
+    const clean = text.trim();
+    if (!clean) return;
+
+    const firstChild = actionHistoryEl.firstElementChild;
+    if (firstChild && firstChild.classList && firstChild.classList.contains("muted")) {
+      actionHistoryEl.innerHTML = "";
+    }
+
+    const item = document.createElement("div");
+    item.className = "action-history-item";
+    item.textContent = clean;
+    actionHistoryEl.appendChild(item);
+
+    actionHistoryEl.scrollTop = actionHistoryEl.scrollHeight;
+  }
+
   async function generateStory() {
+    if (!userInputEl) return;
+
     const userText = userInputEl.value.trim();
     if (!userText) {
-      inputStatusEl.textContent = "请输入内容。";
+      if (inputStatusEl) inputStatusEl.textContent = "请输入内容。";
       return;
     }
     if (!currentSessionId) {
@@ -94,10 +150,15 @@
     }
 
     appendStoryBlock(userText, null, "user");
+    appendActionHistory(userText);
     userInputEl.value = "";
-    inputStatusEl.textContent = "正在向后端请求剧情...";
+    if (inputStatusEl) {
+      inputStatusEl.textContent = "正在向后端请求剧情...";
+    }
 
-    generateBtn.disabled = true;
+    if (generateBtn) {
+      generateBtn.disabled = true;
+    }
 
     const frontStart = performance.now();
 
@@ -128,25 +189,28 @@
       const durationMs = meta.duration_ms || 0;
       totalWordCount += wordCount;
 
-      statWordsEl.textContent = String(wordCount);
-      statDurationEl.textContent = durationMs + " ms";
-      statDurationFrontEl.textContent = durationFrontMs + " ms";
-      statTotalWordsEl.textContent = String(totalWordCount);
+      if (statWordsEl) statWordsEl.textContent = String(wordCount);
+      if (statDurationEl) statDurationEl.textContent = durationMs + " ms";
+      if (statDurationFrontEl) statDurationFrontEl.textContent = durationFrontMs + " ms";
+      if (statTotalWordsEl) statTotalWordsEl.textContent = String(totalWordCount);
 
-      inputStatusEl.textContent = "已生成新剧情。";
+      if (inputStatusEl) inputStatusEl.textContent = "已生成新剧情。";
 
       updateSidebarFromMeta(meta);
       refreshSessionSummary();
     } catch (err) {
       console.error(err);
-      inputStatusEl.textContent = "请求出错：" + err.message;
+      if (inputStatusEl) inputStatusEl.textContent = "请求出错：" + err.message;
     } finally {
-      generateBtn.disabled = false;
+      if (generateBtn) {
+        generateBtn.disabled = false;
+      }
     }
   }
 
   function updateSidebarFromMeta(meta) {
     if (!meta) return;
+
     if (meta.dungeon_name && dungeonNameEl) {
       dungeonNameEl.textContent = meta.dungeon_name;
     }
@@ -156,8 +220,9 @@
     if (meta.dungeon_progress_hint && dungeonProgressEl) {
       dungeonProgressEl.textContent = meta.dungeon_progress_hint;
     }
-    if (meta.main_character && variableSummaryAbilityEl) {
-      if (meta.main_character.ability_tier) {
+
+    if (meta.main_character) {
+      if (meta.main_character.ability_tier && variableSummaryAbilityEl) {
         variableSummaryAbilityEl.textContent = meta.main_character.ability_tier;
       }
       if (meta.main_character.economy_summary && variableSummaryEconomyEl) {
@@ -169,23 +234,30 @@
   async function refreshSessionSummary() {
     if (!currentSessionId) return;
     try {
-      const resp = await fetch("/api/session/summary?session_id=" + encodeURIComponent(currentSessionId));
+      const resp = await fetch(
+        "/api/session/summary?session_id=" + encodeURIComponent(currentSessionId)
+      );
       if (!resp.ok) return;
       const data = await resp.json();
 
       if (data.dungeon) {
         if (dungeonNameEl) dungeonNameEl.textContent = data.dungeon.name || "未命名";
-        if (dungeonNodeNameEl) dungeonNodeNameEl.textContent = data.dungeon.current_node_name || "未知";
-        if (dungeonProgressEl) dungeonProgressEl.textContent = data.dungeon.progress_hint || "未知";
+        if (dungeonNodeNameEl)
+          dungeonNodeNameEl.textContent = data.dungeon.current_node_name || "未知";
+        if (dungeonProgressEl)
+          dungeonProgressEl.textContent = data.dungeon.progress_hint || "未知";
       }
 
       if (data.characters && Array.isArray(data.characters) && data.characters.length) {
-        characterSummaryEl.innerHTML = "";
-        data.characters.forEach(function (ch) {
-          const line = document.createElement("div");
-          line.textContent = ch.character_id + " · " + (ch.name || "") + " · " + (ch.ability_tier || "");
-          characterSummaryEl.appendChild(line);
-        });
+        if (characterSummaryEl) {
+          characterSummaryEl.innerHTML = "";
+          data.characters.forEach(function (ch) {
+            const line = document.createElement("div");
+            line.textContent =
+              ch.character_id + " · " + (ch.name || "") + " · " + (ch.ability_tier || "");
+            characterSummaryEl.appendChild(line);
+          });
+        }
       }
 
       if (data.variables && data.variables.main_character) {
@@ -206,17 +278,105 @@
     }
   }
 
+  function bindActionSuggestionsToggle() {
+    if (!actionSuggestionsEl || !actionSuggestionsToggleEl) return;
+
+    actionSuggestionsToggleEl.addEventListener("click", function () {
+      const isOpen = actionSuggestionsEl.classList.toggle("action-suggestions--open");
+      actionSuggestionsToggleEl.textContent = isOpen
+        ? "下次行动建议 ▲"
+        : "下次行动建议 ▼";
+    });
+  }
+
+  function bindSuggestionChips() {
+    if (!userInputEl) return;
+
+    const chips = document.querySelectorAll(".suggestion-chip[data-suggest]");
+    chips.forEach(function (chip) {
+      chip.addEventListener("click", function () {
+        const suggest = this.getAttribute("data-suggest") || this.textContent || "";
+        if (!suggest) return;
+
+        if (!userInputEl.value) {
+          userInputEl.value = suggest;
+        } else {
+          const prefix = userInputEl.value.replace(/\s*$/, "");
+          userInputEl.value = prefix + "\n" + suggest;
+        }
+        userInputEl.focus();
+      });
+    });
+  }
+
+  function bindInputPanelEvents() {
+    if (inputCollapseToggleEl && inputBarEl) {
+      inputCollapseToggleEl.addEventListener("click", function () {
+        const collapsed = inputBarEl.classList.toggle("input-bar--collapsed");
+        inputCollapseToggleEl.textContent = collapsed ? "⌃" : "⌄";
+        inputCollapseToggleEl.setAttribute(
+          "aria-label",
+          collapsed ? "展开输入栏" : "收起输入栏"
+        );
+
+        if (collapsed && document.body.classList.contains("input-half-screen")) {
+          document.body.classList.remove("input-half-screen");
+          inputBarEl.classList.remove("input-bar--half-screen");
+          if (inputSizeToggleEl) {
+            inputSizeToggleEl.textContent = "↗";
+            inputSizeToggleEl.setAttribute("aria-label", "放大输入框");
+          }
+        }
+      });
+    }
+
+    if (inputSizeToggleEl && inputBarEl) {
+      inputSizeToggleEl.addEventListener("click", function () {
+        if (inputBarEl.classList.contains("input-bar--collapsed")) {
+          inputBarEl.classList.remove("input-bar--collapsed");
+          if (inputCollapseToggleEl) {
+            inputCollapseToggleEl.textContent = "⌄";
+            inputCollapseToggleEl.setAttribute("aria-label", "收起输入栏");
+          }
+        }
+
+        const isHalf = document.body.classList.toggle("input-half-screen");
+        if (isHalf) {
+          inputBarEl.classList.add("input-bar--half-screen");
+          inputSizeToggleEl.textContent = "↙";
+          inputSizeToggleEl.setAttribute("aria-label", "缩小输入框");
+        } else {
+          inputBarEl.classList.remove("input-bar--half-screen");
+          inputSizeToggleEl.textContent = "↗";
+          inputSizeToggleEl.setAttribute("aria-label", "放大输入框");
+        }
+      });
+    }
+  }
+
   function bindEvents() {
-    generateBtn.addEventListener("click", generateStory);
-    userInputEl.addEventListener("keydown", function (e) {
-      if ((e.ctrlKey || e.metaKey) && e.key === "Enter") {
-        e.preventDefault();
-        generateStory();
-      }
-    });
-    newSessionBtn.addEventListener("click", function () {
-      resetSession();
-    });
+    if (generateBtn) {
+      generateBtn.addEventListener("click", generateStory);
+    }
+
+    if (userInputEl) {
+      userInputEl.addEventListener("keydown", function (e) {
+        if ((e.ctrlKey || e.metaKey) && e.key === "Enter") {
+          e.preventDefault();
+          generateStory();
+        }
+      });
+    }
+
+    if (newSessionBtn) {
+      newSessionBtn.addEventListener("click", function () {
+        resetSession();
+      });
+    }
+
+    bindActionSuggestionsToggle();
+    bindSuggestionChips();
+    bindInputPanelEvents();
   }
 
   function init() {
