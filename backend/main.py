@@ -15,7 +15,7 @@ from .api import (
     routes_templates,
 )
 
-app = FastAPI(title="互动小说系统", version="0.1.0")
+app = FastAPI(title="Storyteller-说书人", version="0.1.0")
 
 # 开发阶段先放开 CORS；如果你只用同一个域名访问，可以收紧策略
 app.add_middleware(
@@ -70,4 +70,4 @@ if FRONTEND_DIR.exists():
 if __name__ == "__main__":
     import uvicorn
 
-    uvicorn.run("backend.main:app", host="0.0.0.0", port=8000, reload=True)
+    uvicorn.run("backend.main:app", host="0.0.0.0", port=8010, reload=True)

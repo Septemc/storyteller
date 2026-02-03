@@ -45,68 +45,68 @@
   <main class="two-column-layout">
     <section class="left-panel">
       <div class="panel-header">
-        <div class="panel-title">世界书导入与列表</div>
+        <div class="panel-title">世界书体系</div>
       </div>
 
-      <div class="worldbook-import">
-        <div class="settings-section">
-          <label class="form-label">导入世界书 JSON 文件</label>
-          <input type="file" id="worldbook-file-input" accept=".json" class="form-input">
+      <!-- 顶部：世界书选择 & 操作 -->
+      <div class="settings-section" style="padding-bottom: 12px; border-bottom: 1px solid var(--border-soft); margin-bottom: 10px;">
+        <div style="display: flex; gap: 8px; margin-bottom: 6px; align-items: center;">
+          <select id="world-selector" class="form-select" style="flex: 1;" placeholder="输入新世界书名称"></select>
+          <button id="btn-apply-world" class="btn-primary btn-small">应用</button>
+          <button id="btn-new-world" class="btn-secondary btn-small">新建</button>
+          <button id="btn-import-world" class="btn-secondary btn-small">导入</button>
+          <button id="btn-export-world" class="btn-secondary btn-small">导出</button>
+          <button id="btn-delete-world" class="btn-secondary btn-small">删除</button>
         </div>
-        <div class="settings-section">
-          <button id="worldbook-import-btn" class="btn-primary">导入世界书</button>
-          <span id="worldbook-import-status" class="small-text"></span>
+
+        <!-- 一个通用隐藏 file input，结合 JS 中的 importMode 来区分导入世界/模块/条目 -->
+        <input type="file" id="file-input-hidden" accept=".json" style="display: none;">
+
+        <div id="applied-world-info" class="small-text muted" style="margin-top: 6px; color: var(--accent);">
+          当前应用：尚未应用任何世界书
         </div>
       </div>
 
+
+      <!-- 搜索 + 新建模块 / 条目 -->
+      <!-- 搜索 + 新建模块 / 条目 + 导入模块 / 条目 + 删除 -->
       <div class="settings-section">
-        <label class="form-label">搜索</label>
-        <div class="worldbook-search">
-          <input id="worldbook-search-keyword" class="form-input" placeholder="按标题、标签搜索">
-          <select id="worldbook-search-category" class="form-select">
-            <option value="">全部类别</option>
-            <option value="ability_system">能力体系</option>
-            <option value="finance_system">金融体系</option>
-            <option value="faction">势力</option>
-            <option value="geography">地理</option>
-            <option value="customs">风俗人情</option>
-            <option value="secret_realm">秘境</option>
-            <option value="item_rules">道具规则</option>
-          </select>
-          <button id="worldbook-search-btn" class="btn-secondary">搜索</button>
+        <div class="search-wrapper" style="position: relative;">
+          <input id="search-keyword" class="form-input" placeholder="搜索内容..." style="padding-right: 32px;">
+          <button id="btn-search" class="icon-button" style="position: absolute; right: 6px; top: 50%; transform: translateY(-50%);">
+            🔍
+          </button>
+        </div>
+        <div class="toolbar-actions"
+             style="display: flex; gap: 8px; margin-top: 10px; flex-wrap: nowrap;">
+          <button id="btn-create-category" class="btn-secondary btn-small" style="flex:1 1 0;">新建模块</button>
+          <button id="btn-create-entry"    class="btn-secondary btn-small" style="flex:1 1 0;">新建条目</button>
+          <button id="btn-import-category" class="btn-secondary btn-small" style="flex:1 1 0;">导入模块</button>
+          <button id="btn-import-entry"    class="btn-secondary btn-small" style="flex:1 1 0;">导入条目</button>
+          <button id="btn-delete-node"     class="btn-secondary btn-small" style="flex:1 1 0;">删除</button>
         </div>
       </div>
 
-      <div class="worldbook-list">
-        <table class="table">
-          <thead>
-            <tr>
-              <th>ID</th>
-              <th>类别</th>
-              <th>标题</th>
-              <th>重要度</th>
-            </tr>
-          </thead>
-          <tbody id="worldbook-table-body">
-            <!-- 列表行由 JS 填充 -->
-          </tbody>
-        </table>
-        <div class="table-footer small-text">
-          <span id="worldbook-page-info">第 1 页</span>
-          <div class="table-pagination">
-            <button id="worldbook-prev-page" class="btn-small">上一页</button>
-            <button id="worldbook-next-page" class="btn-small">下一页</button>
-          </div>
-        </div>
-      </div>
+      <!-- 树状结构容器 -->
+      <div id="tree-root" class="worldbook-tree-container" style="flex: 1; min-height: 200px;"></div>
+
     </section>
 
     <section class="right-panel">
       <div class="panel-header">
-        <div class="panel-title">条目详情</div>
+        <div class="panel-title" id="detail-title">内容预览</div>
+        <div class="panel-header-right">
+          <div class="toggle-group" style="display: inline-flex; border: 1px solid var(--border-soft); border-radius: 4px; margin-right: 10px; overflow: hidden;">
+            <button id="mode-preview" class="btn-small active" style="border:none; border-radius:0;">预览</button>
+            <button id="mode-edit" class="btn-small" style="border:none; border-radius:0;">编辑</button>
+          </div>
+          <button id="btn-save-detail" class="btn-primary" disabled>保存修改</button>
+          <button id="btn-export-current" class="btn-secondary btn-small" style="margin-left: 8px;">导出</button>
+        </div>
       </div>
-      <div id="worldbook-detail" class="detail-panel">
-        <div class="small-text muted">点击左侧列表中的条目查看详情。</div>
+
+      <div id="detail-panel" class="detail-panel" style="flex: 1; display: flex; flex-direction: column;">
+        <!-- 右侧内容由 JS 动态填充 -->
       </div>
     </section>
   </main>
