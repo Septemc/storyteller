@@ -538,6 +538,13 @@ body.bg-circuit {
   overflow: hidden;
 }
 
+/* 右侧内容区：唯一滚动源 */
+#detail-panel {
+  flex: 1;
+  overflow-y: auto;
+  min-height: 0; /* 关键！否则 flex 子项无法滚动 */
+}
+
 /* =========================================
    7. 页面特定样式 (Page Specifics)
    ========================================= */
@@ -651,7 +658,7 @@ body[data-page="index"] .input-container {
   transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
 }
 
-/* [新增] 针对“羊皮卷 (scroll)”和“晨曦 (light)”主题的特化样式 */
+/* [专用修复] 针对“羊皮卷 (scroll)”和“晨曦 (light)”主题的特化样式 */
 /* 解决背景太黑的问题 */
 [data-theme="scroll"] body[data-page="index"] .input-container,
 [data-theme="light"] body[data-page="index"] .input-container {
@@ -855,25 +862,7 @@ body[data-page="index"].input-half-screen .input-textarea {
 }
 
 /* 响应式 */
-@media (max-width: 900px) {
-  body[data-page="index"] .main-layout {
-      grid-template-columns: 1fr;
-      padding-bottom: 0;
-  }
-  body[data-page="index"] .input-bar {
-      position: static;
-      padding: 0;
-      background: var(--bg-elevated);
-      border-top: 1px solid var(--border-soft);
-  }
-  body[data-page="index"] .input-container {
-      max-width: 100%;
-      border-radius: 0;
-      border: none;
-      background: transparent !important; /* 移动端背景透明 */
-      box-shadow: none;
-  }
-}
+
 
 /* --- B. 设置页面 (Settings Page) --- */
 .settings-container {
@@ -1246,212 +1235,7 @@ body[data-page="index"].input-half-screen .input-textarea {
   }
 }
 
-/* 世界书板块专用结构 */
-/* --- 世界书树状视图 (Tree View) --- */
-.worldbook-tree-container {
-  flex: 1;
-  overflow-y: auto;
-  padding-right: 4px; /* 防止滚动条遮挡 */
-}
-
-/* 1. 第一级：世界书 (World Book) */
-.tree-level-1 {
-  margin-bottom: 12px;
-  border: 1px solid var(--border-soft);
-  border-radius: var(--radius-sm);
-  background: rgba(0,0,0,0.1);
-  overflow: hidden;
-}
-
-.tree-header-1 {
-  padding: 10px;
-  background: var(--bg-elevated-alt);
-  font-weight: 600;
-  font-size: 14px;
-  color: var(--accent);
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  cursor: pointer;
-  border-bottom: 1px solid transparent;
-  transition: all 0.2s;
-}
-
-.tree-level-1.expanded .tree-header-1 {
-  border-bottom-color: var(--border-soft);
-}
-
-/* 2. 第二级：分类/模块 (Category) */
-.tree-container-2 {
-  padding: 4px;
-  display: none; /* 默认折叠 */
-}
-.tree-level-1.expanded .tree-container-2 {
-  display: block;
-}
-
-.tree-level-2 {
-  margin-left: 8px;
-  margin-bottom: 2px;
-}
-
-.tree-header-2 {
-  padding: 6px 8px;
-  font-size: 13px;
-  color: var(--text-primary);
-  border-radius: var(--radius-sm);
-  cursor: pointer;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  opacity: 0.9;
-}
-
-.tree-header-2:hover {
-  background: rgba(255,255,255,0.05);
-}
-
-.tree-header-2 .icon-arrow {
-  font-size: 10px;
-  transition: transform 0.2s;
-  margin-right: 6px;
-  color: var(--text-secondary);
-}
-.tree-level-2.expanded .icon-arrow {
-  transform: rotate(90deg);
-}
-
-/* 3. 第三级：条目 (Entry) */
-.tree-container-3 {
-  padding-left: 20px; /* 缩进 */
-  display: none;
-}
-.tree-level-2.expanded .tree-container-3 {
-  display: block;
-}
-
-.tree-item-3 {
-  padding: 4px 8px;
-  font-size: 12px;
-  color: var(--text-secondary);
-  cursor: pointer;
-  border-left: 2px solid transparent;
-  transition: all 0.1s;
-  display: flex;
-  justify-content: space-between; /* 为了放删除按钮 */
-  align-items: center;
-}
-
-.tree-item-3:hover {
-  color: var(--text-primary);
-  background: rgba(255,255,255,0.03);
-}
-
-.tree-item-3.active {
-  color: var(--text-primary);
-  border-left-color: var(--accent);
-  background: var(--accent-soft);
-}
-
-/* 删除按钮 (仅在 hover 时显示，或者一直显示但颜色淡) */
-.tree-delete-btn {
-  opacity: 0.4;
-  cursor: pointer;
-  padding: 2px 6px;
-  font-size: 10px;
-  color: var(--text-secondary);
-  border-radius: 4px;
-}
-.tree-delete-btn:hover {
-  opacity: 1;
-  background: rgba(255, 95, 95, 0.2);
-  color: var(--danger);
-}
-
-/* --- Worldbook 专用样式扩展 --- */
-
-/* 上传/导入区域容器 */
-.import-card {
-  border: 2px dashed var(--border-soft);
-  border-radius: var(--radius-md);
-  background: rgba(0, 0, 0, 0.02);
-  padding: 20px;
-  text-align: center;
-  transition: all 0.2s ease;
-  cursor: pointer;
-  position: relative;
-  margin-top: 10px;
-}
-
-.import-card:hover {
-  border-color: var(--accent);
-  background: var(--accent-soft);
-}
-
-.import-card.drag-over {
-  border-color: var(--accent);
-  background: var(--accent-soft);
-  transform: scale(0.99);
-}
-
-.import-icon {
-  font-size: 24px;
-  margin-bottom: 8px;
-  opacity: 0.8;
-}
-
-.import-text {
-  font-size: 13px;
-  color: var(--text-secondary);
-}
-
-.import-subtext {
-  font-size: 11px;
-  color: var(--text-secondary);
-  opacity: 0.6;
-  margin-top: 4px;
-}
-
-/* 状态反馈消息 */
-.status-message {
-  margin-top: 10px;
-  padding: 8px 12px;
-  border-radius: var(--radius-sm);
-  font-size: 12px;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  opacity: 0; /* 默认隐藏 */
-  transform: translateY(-5px);
-  transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
-  pointer-events: none; /* 防止遮挡 */
-}
-
-.status-message.show {
-  opacity: 1;
-  transform: translateY(0);
-}
-
-.status-message.success {
-  background: rgba(66, 185, 131, 0.15); /* Green tint */
-  color: #42b983;
-  border: 1px solid rgba(66, 185, 131, 0.3);
-}
-
-.status-message.error {
-  background: rgba(255, 95, 95, 0.15); /* Red tint */
-  color: #ff5f5f;
-  border: 1px solid rgba(255, 95, 95, 0.3);
-}
-
-.status-message.info {
-  background: var(--bg-elevated-alt);
-  color: var(--text-secondary);
-  border: 1px solid var(--border-soft);
-}
-
 /* style.css - 添加到末尾或替换原有的 Worldbook 样式 */
-
 /* --- Worldbook 树状视图重构 --- */
 .worldbook-tree-container {
   overflow-y: auto;
@@ -1542,20 +1326,6 @@ body[data-page="index"].input-half-screen .input-textarea {
   background: rgba(0,0,0,0.03);
 }
 
-/* 箭头图标动画 */
-.icon-arrow {
-  display: inline-block;
-  width: 14px;
-  text-align: center;
-  margin-right: 4px;
-  transition: transform 0.2s;
-  font-size: 10px;
-  color: var(--text-secondary);
-}
-.expanded > .tree-node .icon-arrow {
-  transform: rotate(90deg);
-}
-
 /* 状态切换按钮激活样式 */
 .toggle-group .btn-small.active {
   background-color: var(--accent);
@@ -1578,12 +1348,30 @@ body[data-page="index"].input-half-screen .input-textarea {
   flex: 1;
 }
 
+/* Worldbook 分级目录箭头 */
 .arrow-toggle {
-  padding: 0 10px;
-  cursor: pointer;
-  font-size: 10px;
-  transition: transform 0.2s;
+  width: 0;
+  height: 0;
+  margin-left: 8px;
+
+  border-top: 5px solid transparent;
+  border-bottom: 5px solid transparent;
+  border-left: 7px solid var(--text-secondary);
+
+  transition: transform 0.2s ease;
+  flex-shrink: 0;
 }
+
+/* 展开状态：箭头向下 */
+.tree-level-2-container.expanded .arrow-toggle {
+  transform: rotate(90deg);
+}
+
+/* 选中状态下箭头变亮 */
+.tree-node.selected .arrow-toggle {
+  border-left-color: rgba(255, 255, 255, 0.85);
+}
+
 
 .tree-children-2 {
   display: none;
@@ -1615,3 +1403,83 @@ body[data-page="index"].input-half-screen .input-textarea {
   height: 100%;
   overflow-y: auto;
 }
+/* 上传/导入区域容器 */
+.import-card {
+  border: 2px dashed var(--border-soft);
+  border-radius: var(--radius-md);
+  background: rgba(0, 0, 0, 0.02);
+  padding: 20px;
+  text-align: center;
+  transition: all 0.2s ease;
+  cursor: pointer;
+  position: relative;
+  margin-top: 10px;
+}
+
+.import-card:hover {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+}
+
+.import-card.drag-over {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+  transform: scale(0.99);
+}
+
+.import-icon {
+  font-size: 24px;
+  margin-bottom: 8px;
+  opacity: 0.8;
+}
+
+.import-text {
+  font-size: 13px;
+  color: var(--text-secondary);
+}
+
+.import-subtext {
+  font-size: 11px;
+  color: var(--text-secondary);
+  opacity: 0.6;
+  margin-top: 4px;
+}
+
+/* 状态反馈消息 */
+.status-message {
+  margin-top: 10px;
+  padding: 8px 12px;
+  border-radius: var(--radius-sm);
+  font-size: 12px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  opacity: 0; /* 默认隐藏 */
+  transform: translateY(-5px);
+  transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+  pointer-events: none; /* 防止遮挡 */
+}
+
+.status-message.show {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.status-message.success {
+  background: rgba(66, 185, 131, 0.15); /* Green tint */
+  color: #42b983;
+  border: 1px solid rgba(66, 185, 131, 0.3);
+}
+
+.status-message.error {
+  background: rgba(255, 95, 95, 0.15); /* Red tint */
+  color: #ff5f5f;
+  border: 1px solid rgba(255, 95, 95, 0.3);
+}
+
+.status-message.info {
+  background: var(--bg-elevated-alt);
+  color: var(--text-secondary);
+  border: 1px solid var(--border-soft);
+}
+

@@ -325,7 +325,7 @@
       container.innerHTML = `
         <div class="tree-node tree-header-2" data-cat="${escapeHtml(catName)}">
           <span class="cat-click-area">📂 ${escapeHtml(catName)}</span>
-          <span class="icon-arrow arrow-toggle">${world._expanded_cats && world._expanded_cats[catName] ? '▼' : '▶'}</span>
+          <span class="icon-arrow arrow-toggle"></span>
         </div>
         <div class="tree-children-2">
           ${filteredEntries.map(e => `
