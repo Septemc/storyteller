@@ -28,6 +28,29 @@
 
 ---
 
+## 界面图片
+
+剧情界面（主界面）
+
+![image.png](assets/image1.png)
+
+角色界面
+
+![image.png](assets/image2.png)
+
+世界书界面
+
+![image.png](assets/image3.png)
+
+副本（剧本）界面
+
+![image.png](assets/image4.png)
+
+设置界面
+
+![image.png](assets/image5.png)
+
+---
 
 ## 🚀项目开发
 
